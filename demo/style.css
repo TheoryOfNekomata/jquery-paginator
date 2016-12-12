@@ -1,22 +1,20 @@
-/* margins of each component */
+/* just set margins to have metric units */
 
-/*.paginator .header > .margin {*/
-  /*margin: 0.5in 0.75in;*/
-/*}*/
+.paginator .header > .margin {
+  margin: 1cm 1.5cm;
+}
 
-/*.paginator .footer > .margin {*/
-  /*margin: 0.5in 0.75in;*/
-/*}*/
+.paginator .footer > .margin {
+  margin: 1cm 1.5cm;
+}
 
-/*.paginator .content > .margin {*/
-  /*margin: 1in;*/
-/*}*/
+.paginator .content > .margin {
+  margin: 2cm;
+}
 
-/* size of the page */
+/* set page size to A4 */
 
-/*.paginator .page {*/
-  /*width: 8.5in;*/
-  /*height: 5.5in;*/
-/*}*/
-
-/* padding of the viewport */
+.paginator .page {
+  width: 210mm;
+  height: 297mm;
+}

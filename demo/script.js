@@ -1,9 +1,9 @@
 (function () {
-    var $pagination;
+    var $paginationEl, paginator;
 
-    $pagination = $('#pagination');
+    $paginationEl = $('#pagination');
 
-    $pagination.paginate({
+    $paginationEl.paginate({
         size: {
             width: '8.5in',
             height: '5.5in'
@@ -17,7 +17,7 @@
             html += '<span><span id="el-' + i + '" style="display: block"><span id="el-child-' + i + '" style="display: block;"><span>The quick brown fox jumps over the lazy dog.</span></span></span></span>';
         }
 
-        $pagination
+        $paginationEl
             .children('.model')
             .children('.content')
             .append(html);

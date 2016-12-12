@@ -42,11 +42,11 @@
 /* customizable page params */
 
 .paginator .header > .margin {
-  margin: 0.5in 0.75in;
+  margin: 0.5in 1in;
 }
 
 .paginator .footer > .margin {
-  margin: 0.5in 0.75in;
+  margin: 0.5in 1in;
 }
 
 .paginator .content > .margin {

@@ -1,5 +1,7 @@
 (function () {
     $.fn.paginate = function (opts) {
-        new Paginator.Component(this, opts);
+        this.each(function () {
+            new Paginator.Component($(this), opts);
+        });
     };
 })();

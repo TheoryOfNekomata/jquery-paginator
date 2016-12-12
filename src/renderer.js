@@ -1,6 +1,6 @@
 (function () {
     Paginator.Renderer = function Renderer($paginator) {
-        var $page, pageNumber;
+        var $page;
 
         function hasKidsOnTheBlock($el) {
             var hasKidz = false,
@@ -69,11 +69,11 @@
         }
 
         this.render = function render() {
-            $paginator.$view.html('');
+            $paginator.$$view.html('');
             $paginator._lastPageNumber = 0;
             $page = null;
             append(
-                $paginator.$model.children('.content').children()
+                $paginator.$$model.children('.content').children()
             );
         };
     };

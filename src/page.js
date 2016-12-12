@@ -2,7 +2,7 @@
     function conditionallyAppendHeader($paginator, $page) {
         var $header;
 
-        $header = $paginator.$model.children('.header');
+        $header = $paginator.$$model.children('.header');
 
         if ($header.length > 0) {
             $header = $header.eq($header.length > 1 ? (($paginator._lastPageNumber - 1) % $header.length) : 0).clone(true, true);
@@ -21,7 +21,7 @@
     function conditionallyAppendFooter($paginator, $page) {
         var $footer;
 
-        $footer = $paginator.$model.children('.footer');
+        $footer = $paginator.$$model.children('.footer');
 
         if ($footer.length > 0) {
             $footer = $footer.eq($footer.length > 1 ? (($paginator._lastPageNumber - 1) % $footer.length) : 0).clone(true, true);
@@ -68,7 +68,7 @@
         };
 
         $paginator._lastPageNumber++;
-        $paginator.$view.append($page);
+        $paginator.$$view.append($page);
         conditionallyAppendHeader($paginator, $page);
         conditionallyAppendFooter($paginator, $page);
 

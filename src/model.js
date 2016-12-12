@@ -1,9 +1,9 @@
 (function () {
     Paginator.Model = function Model($paginator) {
-        var $model;
+        var $$model;
 
-        $model = $('<div>');
-        $model.addClass('model');
+        $$model = $('<div>');
+        $$model.addClass('model');
 
         /* Mount */
 
@@ -12,11 +12,11 @@
             .each(function () {
                 var $child = $(this);
 
-                $model.append($child);
+                $$model.append($child);
             });
 
-        $paginator.append($model);
+        $paginator.append($$model);
 
-        return $model;
+        return $$model;
     };
 })();
