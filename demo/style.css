@@ -1,0 +1,22 @@
+/* margins of each component */
+
+/*.paginator .header > .margin {*/
+  /*margin: 0.5in 0.75in;*/
+/*}*/
+
+/*.paginator .footer > .margin {*/
+  /*margin: 0.5in 0.75in;*/
+/*}*/
+
+/*.paginator .content > .margin {*/
+  /*margin: 1in;*/
+/*}*/
+
+/* size of the page */
+
+/*.paginator .page {*/
+  /*width: 8.5in;*/
+  /*height: 5.5in;*/
+/*}*/
+
+/* padding of the viewport */

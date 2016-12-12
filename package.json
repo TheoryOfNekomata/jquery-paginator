@@ -1,0 +1,36 @@
+{
+  "name": "@theoryofnekomata/jquery-paginator",
+  "version": "0.0.0",
+  "description": "Splits elements into pages.",
+  "main": "bin/jquery-paginator.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Temoto-kun/jquery-paginator.git"
+  },
+  "keywords": [
+    "jQuery",
+    "pagination",
+    "UI",
+    "DOM",
+    "presentation",
+    "preview",
+    "wysiwyg"
+  ],
+  "author": "TheoryOfNekomata <allan.crisostomo@outlook.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Temoto-kun/jquery-paginator/issues"
+  },
+  "homepage": "https://github.com/Temoto-kun/jquery-paginator#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-uglify": "^2.0.0"
+  },
+  "dependencies": {
+    "jquery": ">=2.x.x"
+  }
+}

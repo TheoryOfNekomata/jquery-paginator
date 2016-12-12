@@ -1,0 +1,74 @@
+.paginator, .paginator * {
+  box-sizing: border-box;
+}
+
+.paginator .page > .padding {
+  position: absolute;
+}
+
+.paginator > .model {
+  display: none;
+}
+
+.paginator .page {
+  position: relative;
+  border: 1px solid;
+}
+
+.paginator > .page {
+  display: none;
+}
+
+.paginator .page > .header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.paginator .page > .footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+
+.paginator .page::after {
+  content: ' ';
+  display: block;
+  position: absolute;
+}
+
+/* customizable page params */
+
+.paginator .header > .margin {
+  margin: 0.5in 0.75in;
+}
+
+.paginator .footer > .margin {
+  margin: 0.5in 0.75in;
+}
+
+.paginator .content > .margin {
+  margin: 1in;
+}
+
+.paginator .page {
+  width: 8.5in;
+  height: 11in;
+}
+
+.paginator .page + .page {
+  margin-top: 30px;
+}
+
+.paginator .view {
+  margin: 30px;
+}
+
+.paginator .page::after {
+  bottom: -30px;
+  right: -30px;
+  width: 30px;
+  height: 30px;
+}
