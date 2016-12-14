@@ -5,12 +5,23 @@
         $$model = $('<div>');
         $$model.addClass('model');
 
+        function markChildren($parent) {
+            $parent.children().each(function () {
+                markChildren($(this).addClass('-model'));
+            });
+        }
+
         /* Mount */
 
         $paginator
             .children()
             .each(function () {
                 var $child = $(this);
+
+                $child.filter('.content').children().each(function () {
+                    var $grandChild = $(this);
+                    markChildren($grandChild);
+                });
 
                 $$model.append($child);
             });

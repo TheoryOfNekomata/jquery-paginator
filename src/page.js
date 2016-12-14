@@ -2,7 +2,7 @@
     function conditionallyAppendHeader($paginator, $page) {
         var $header;
 
-        $header = $paginator.$$model.children('.header');
+        $header = $paginator.$$model.find('.header');
 
         if ($header.length > 0) {
             $header = $header.eq($header.length > 1 ? (($paginator._lastPageNumber - 1) % $header.length) : 0).clone(true, true);
@@ -21,7 +21,7 @@
     function conditionallyAppendFooter($paginator, $page) {
         var $footer;
 
-        $footer = $paginator.$$model.children('.footer');
+        $footer = $paginator.$$model.find('.footer');
 
         if ($footer.length > 0) {
             $footer = $footer.eq($footer.length > 1 ? (($paginator._lastPageNumber - 1) % $footer.length) : 0).clone(true, true);
@@ -38,8 +38,8 @@
     }
 
     function getContentHeight($page) {
-        var $header = $page.children('.header'),
-            $footer = $page.children('.footer'),
+        var $header = $page.find('.header'),
+            $footer = $page.find('.footer'),
             topHeight = Math.max($header.length > 0 ? $header.height() : 0, parseInt($page.$margin.css('margin-top'))),
             bottomHeight = Math.max($footer.length > 0 ? $footer.height() : 0, parseInt($page.$margin.css('margin-top')));
 
@@ -54,14 +54,11 @@
         $page = $('<div>');
         $page.addClass('page');
 
-        //$page.css(settings.page.size);
         $page.$content = $('<div>');
         $page.$content.addClass('content');
 
         $page.$margin = $('<div>');
         $page.$margin.addClass('margin');
-
-
 
         $page.needsBreaking = function needsBreaking() {
             return this.$content.height() > getContentHeight(this);
@@ -71,12 +68,6 @@
         $paginator.$$view.append($page);
         conditionallyAppendHeader($paginator, $page);
         conditionallyAppendFooter($paginator, $page);
-
-        //Object
-        //    .keys(settings.page.margins)
-        //    .forEach(function (dir) {
-        //        $page.$margin.css('margin-' + dir, settings.page.margins[dir]);
-        //    });
 
         $page.append($page.$content);
         $page.$content.append($page.$margin);

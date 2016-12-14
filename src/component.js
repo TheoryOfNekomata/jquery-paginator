@@ -11,13 +11,11 @@
         $paginator._lastPageNumber = 0;
 
         $paginator.$$model.on('DOMSubtreeModified', function () {
-            if (!isRendering) {
-                isRendering = true;
-                $paginator._renderer.render();
-                setTimeout(function () {
-                    isRendering = false;
-                }, 0);
+            if (!!$paginator.data('isRendering')) {
+                return;
             }
+
+            $paginator._renderer.render();
         });
 
         $paginator._renderer.render();

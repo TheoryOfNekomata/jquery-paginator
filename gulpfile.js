@@ -5,14 +5,20 @@ var
      * @type {string[]}
      */
     files = [
-        './src/main.js'
+        './src/init.js',
+        './src/settings/component.js',
+        './src/settings.js',
+        './src/renderer.js',
+        './src/page.js',
+        './src/model.js',
+        './src/view.js',
+        './src/component.js',
+        './src/definition.js'
     ],
 
-    /**
-     * The base name of the compiled files.
-     * @type {string}
-     */
-    name = 'jquery-paginator',
+    styles = [
+        './src/style.css'
+    ],
 
     /**
      * The output directory of the compiled files.
@@ -24,9 +30,15 @@ var
  * Task definitions *
  * ---------------- */
 
+    name = require('./package.json').name,
+
     gulp = require('gulp'),
     concat = require('gulp-concat'),
     uglify = require('gulp-uglify');
+
+if (name.indexOf('/') > -1) {
+    name = name.slice(name.indexOf('/') + 1);
+}
 
 gulp.task('compile', function (cb) {
     gulp.src(files)
@@ -43,4 +55,11 @@ gulp.task('compile-minified', function (cb) {
         .on('end', cb);
 });
 
-gulp.task('default', ['compile', 'compile-minified']);
+gulp.task('copy-styles', function (cb) {
+    gulp.src(styles)
+        .pipe(concat(name + '.css'))
+        .pipe(gulp.dest(output))
+        .on('end', cb);
+});
+
+gulp.task('default', ['compile', 'compile-minified', 'copy-styles']);
