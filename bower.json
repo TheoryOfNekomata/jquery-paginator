@@ -1,0 +1,29 @@
+{
+  "name": "jquery-paginator",
+  "description": "Splits elements into pages.",
+  "main": "bin/jquery-paginator.js",
+  "authors": [
+    "TheoryOfNekomata <allan.crisostomo@outlook.com>"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "jQuery",
+    "pagination",
+    "UI",
+    "DOM",
+    "presentation",
+    "preview",
+    "wysiwyg"
+  ],
+  "homepage": "https://github.com/Temoto-kun/jquery-paginator",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": ">=2.x.x"
+  }
+}
