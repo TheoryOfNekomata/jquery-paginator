@@ -1,4 +1,11 @@
 (function () {
+    /**
+     * Class for the paginator.
+     * @param {jQuery} $paginator The paginator element wrapped in jQuery.
+     * @param {Paginator.Settings} opts The paginator options.
+     * @returns {jQuery} The initialized paginator.
+     * @constructor
+     */
     Paginator.Component = function Component($paginator, opts) {
         var isRendering = false;
 

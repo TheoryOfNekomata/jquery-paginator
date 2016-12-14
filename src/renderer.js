@@ -1,13 +1,31 @@
 (function () {
     var test = false;
 
+    /**
+     * Class for the paginator's renderer, the component in charge of displaying
+     * elements from the model to the view without losing data, as well as preserving
+     * their bound data and events.
+     * @param {Paginator.Component} $paginator The paginator.
+     * @constructor
+     */
     Paginator.Renderer = function Renderer($paginator) {
         var $page;
 
+        /**
+         * Gets a value indicating if an element has block children (excluding itself).
+         * @param {jQuery} $el The element.
+         * @returns {boolean} Does the element have block children?
+         */
         function hasKidsOnTheBlock($el) {
             var hasKidz = false,
                 $kidz = $el.children();
 
+            /**
+             * Checks if an element or its descendants are block elements.
+             * @param {jQuery} $kiddo The element.
+             * @param {boolean} isBloke Is itself or its children blocks?
+             * @returns {boolean} Is the element or its children blocks?
+             */
             function isBlockHead($kiddo, isBloke) {
                 var $children = $kiddo.children();
 
@@ -36,10 +54,14 @@
                     hasKidz = $kiddo.css('display') === 'block' || isBlockHead($kiddo, hasKidz);
                 });
 
-            console.log(hasKidz);
             return hasKidz;
         }
 
+        /**
+         * Appends the children of an element to the view on its corresponding page.
+         * @param {jQuery} $parent The parent element.
+         * @see moveToModel
+         */
         function append($parent) {
             var $children = $parent.children();
 
@@ -47,10 +69,10 @@
                 $page = new Paginator.Page($paginator);
             }
 
-            window.debug = hasKidsOnTheBlock;
-
             if (!hasKidsOnTheBlock($parent)) {
-                console.log($parent);
+                // Here is where the appending happens.
+                // We need to get the parent so we can put back the element to the model
+                // because the data/events are still there (.clone() is expensive).
                 $parent.data('modelParent', $parent.parent());
                 $page.$margin.append($parent);
 
@@ -69,7 +91,11 @@
                 });
         }
 
-        function appendToParent($element) {
+        /**
+         * Moves the element to its corresponding parent.
+         * @param {jQuery} $element The element from the view.
+         */
+        function moveToModel($element) {
             var ignoreList = [
                     '[data-ng-repeat]'
                 ],
@@ -81,45 +107,40 @@
                 return;
             }
 
-            console.log($element.data('modelParent'), $element);
             $element.data('modelParent').append($element);
         }
 
-        function clearView() {
+        /**
+         * Moves all the elements from the view to the model.
+         */
+        function resetModel() {
             var $viewEl = $paginator.$$view.find('.page')
                 .find('.content')
                 .children()
                 .children();
 
             $viewEl.each(function () {
-                appendToParent($(this));
+                moveToModel($(this));
             });
-            //
-            //$viewEl.each(function () {
-            //    var $modelParent = $(this).data('modelParent');
-            //    if (!$modelParent) {
-            //        return;
-            //    }
-            //    $modelParent.prepend(this);
-            //});
-
-            //$paginator.$$model.find('.content').prepend(
-            //    $paginator.$$view.find('.page').find('.content').children().children()
-            //);
-
-            $paginator.$$view.html('');
         }
 
+        /**
+         * Resets the pagination of the view.
+         */
         function resetPages() {
             $paginator._lastPageNumber = 0;
             $page = null;
         }
 
+        /**
+         * Renders the elements from the paginator's model.
+         */
         this.render = function render() {
             $paginator.data('isRendering', true);
-            clearView();
+            resetModel();
             if (!test) {
                 setTimeout(function () {
+                    $paginator.$$view.html('');
                     resetPages();
                     append($paginator.$$model.children('.content').children());
                     $paginator.data('isRendering', false);
