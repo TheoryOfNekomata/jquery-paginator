@@ -5,7 +5,7 @@
      * @returns {jQuery} The page element.
      * @constructor
      */
-    Paginator.Page = function Page($paginator) {
+    Paginator.Page = function Page($paginator, pageNumber) {
         var $page, settings;
 
         settings = $paginator.data('settings');
@@ -84,8 +84,11 @@
             }
         };
 
-        $paginator._lastPageNumber++;
-        $paginator.$$view.append($page);
+        $page.data('pageNumber', pageNumber);
+
+        $page.isBlank = function isBlank() {
+            return this.$content.$margin.children().length < 1;
+        };
 
         $page.conditionallyAppendHeader($paginator);
         $page.conditionallyAppendFooter($paginator);

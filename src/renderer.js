@@ -9,7 +9,7 @@
      * @constructor
      */
     Paginator.Renderer = function Renderer($paginator) {
-        var $page;
+        var $pages = [];
 
         /**
          * Gets a value indicating if an element has block children (excluding itself).
@@ -65,20 +65,24 @@
         function append($parent) {
             var $children = $parent.children();
 
-            if (!$page) {
-                $page = new Paginator.Page($paginator);
-            }
-
             if (!hasKidsOnTheBlock($parent)) {
                 // Here is where the appending happens.
                 // We need to get the parent so we can put back the element to the model
                 // because the data/events are still there (.clone() is expensive).
                 $parent.data('modelParent', $parent.parent());
-                $page.$margin.append($parent);
 
-                if ($page.needsBreaking()) {
-                    $page = new Paginator.Page($paginator);
-                    $page.$margin.append($parent);
+                if (!$pages[$paginator._lastPageNumber]) {
+                    $pages[$paginator._lastPageNumber] = new Paginator.Page($paginator, $paginator._lastPageNumber);
+                    $paginator.$$view.append($pages[$paginator._lastPageNumber]);
+                }
+
+                $pages[$paginator._lastPageNumber].$margin.append($parent);
+
+                if ($pages[$paginator._lastPageNumber].needsBreaking()) {
+                    $paginator._lastPageNumber++;
+                    $pages[$paginator._lastPageNumber] = $pages[$paginator._lastPageNumber] || new Paginator.Page($paginator, $paginator._lastPageNumber);
+                    $pages[$paginator._lastPageNumber].$margin.append($parent);
+                    $paginator.$$view.append($pages[$paginator._lastPageNumber]);
                 }
                 return;
             }
@@ -129,7 +133,10 @@
          */
         function resetPages() {
             $paginator._lastPageNumber = 0;
-            $page = null;
+        }
+
+        function clearView() {
+            $paginator.$$view.html('');
         }
 
         /**
@@ -137,10 +144,10 @@
          */
         this.render = function render() {
             $paginator.data('isRendering', true);
-            resetModel();
+            //resetModel();
             if (!test) {
                 setTimeout(function () {
-                    $paginator.$$view.html('');
+                    //clearView();
                     resetPages();
                     append($paginator.$$model.children('.content').children());
                     $paginator.data('isRendering', false);
