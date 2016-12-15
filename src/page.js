@@ -49,7 +49,7 @@
             $header = $paginator.$$model.find('.header');
 
             if ($header.length > 0) {
-                $header = $header.eq($header.length > 1 ? (($paginator._lastPageNumber - 1) % $header.length) : 0).clone(true, true);
+                $header = $header.eq($header.length > 1 ? (($paginator._lastPageNumber) % $header.length) : 0).clone(true, true);
 
                 if ($header.hasClass('terminal') && $paginator._lastPageNumber !== 1) {
                     return;
@@ -58,7 +58,9 @@
                 $header.children().wrapAll('<div class="margin">');
 
                 this.append($header);
-                this.$content.css('margin-top', $header.outerHeight(true));
+                setTimeout(function () {
+                    $page.$content.css('margin-top', $header.height());
+                });
             }
         };
 
@@ -71,7 +73,7 @@
             $footer = $paginator.$$model.find('.footer');
 
             if ($footer.length > 0) {
-                $footer = $footer.eq($footer.length > 1 ? (($paginator._lastPageNumber - 1) % $footer.length) : 0).clone(true, true);
+                $footer = $footer.eq($footer.length > 1 ? (($paginator._lastPageNumber) % $footer.length) : 0).clone(true, true);
 
                 if ($footer.hasClass('terminal') && $paginator._lastPageNumber !== 1) {
                     return;
@@ -80,7 +82,9 @@
                 $footer.children().wrapAll('<div class="margin">');
 
                 this.append($footer);
-                this.$content.css('margin-bottom', $footer.outerHeight(true));
+                setTimeout(function () {
+                    $page.$content.css('margin-bottom', $footer.height());
+                });
             }
         };
 
