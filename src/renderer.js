@@ -63,36 +63,43 @@
          * @see moveToModel
          */
         function append($parent) {
-            var $children = $parent.children();
+            function appendChild($child) {
+                var $children = $child.children();
 
-            if (!hasKidsOnTheBlock($parent)) {
-                // Here is where the appending happens.
-                // We need to get the parent so we can put back the element to the model
-                // because the data/events are still there (.clone() is expensive).
-                $parent.data('modelParent', $parent.parent());
+                if (!hasKidsOnTheBlock($child) && $child.css('display') === 'block') {
+                    // Here is where the appending happens.
+                    // We need to get the parent so we can put back the element to the model
+                    // because the data/events are still there (.clone() is expensive).
+                    $child.data('modelParent', $child.parent());
 
-                if (!$pages[$paginator._lastPageNumber]) {
-                    $pages[$paginator._lastPageNumber] = new Paginator.Page($paginator, $paginator._lastPageNumber);
-                    $paginator.$$view.append($pages[$paginator._lastPageNumber]);
+                    if (!$pages[ $paginator._lastPageNumber ]) {
+                        $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
+                        $paginator.$$view.append($pages[ $paginator._lastPageNumber ]);
+                    }
+
+                    $pages[ $paginator._lastPageNumber ].$margin.append($child);
+
+                    if ($pages[ $paginator._lastPageNumber ].needsBreaking()) {
+                        $paginator._lastPageNumber++;
+                        if (!$pages[ $paginator._lastPageNumber ]) {
+                            $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
+                            $paginator.$$view.append($pages[ $paginator._lastPageNumber ]);
+                        }
+                        $pages[ $paginator._lastPageNumber ] = $pages[ $paginator._lastPageNumber ] || new Paginator.Page($paginator, $paginator._lastPageNumber);
+                        $pages[ $paginator._lastPageNumber ].$margin.append($child);
+                    }
+                    return;
                 }
 
-                $pages[$paginator._lastPageNumber].$margin.append($parent);
+                $children
+                    .each(function () {
+                        var $child = $(this);
 
-                if ($pages[$paginator._lastPageNumber].needsBreaking()) {
-                    $paginator._lastPageNumber++;
-                    $pages[$paginator._lastPageNumber] = $pages[$paginator._lastPageNumber] || new Paginator.Page($paginator, $paginator._lastPageNumber);
-                    $pages[$paginator._lastPageNumber].$margin.append($parent);
-                    $paginator.$$view.append($pages[$paginator._lastPageNumber]);
-                }
-                return;
+                        appendChild($child);
+                    });
             }
 
-            $children
-                .each(function () {
-                    var $child = $(this);
-
-                    append($child);
-                });
+            appendChild($parent);
         }
 
         /**
@@ -111,7 +118,7 @@
                 return;
             }
 
-            $element.data('modelParent').append($element);
+            $element.data('modelParent').appendChild($element);
         }
 
         /**
@@ -133,10 +140,18 @@
          */
         function resetPages() {
             $paginator._lastPageNumber = 0;
+            $pages.forEach(function ($page) {
+                $page.removeAttr('hidden');
+            });
         }
 
-        function clearView() {
-            $paginator.$$view.html('');
+        function setPagesVisibility() {
+            $pages.forEach(function ($page) {
+                if ($page.data('pageNumber') < 1 || !$page.isBlank()) {
+                    return;
+                }
+                $page.attr('hidden', 'hidden');
+            });
         }
 
         /**
@@ -144,14 +159,17 @@
          */
         this.render = function render() {
             $paginator.data('isRendering', true);
-            //resetModel();
             if (!test) {
+                resetPages();
                 setTimeout(function () {
-                    //clearView();
-                    resetPages();
-                    append($paginator.$$model.children('.content').children());
-                    $paginator.data('isRendering', false);
-                }, 0);
+                    $paginator.$$model.children('.content').children().each(function () {
+                        append($(this));
+                    });
+                    setTimeout(function () {
+                        setPagesVisibility();
+                        $paginator.data('isRendering', false);
+                    });
+                });
             }
         };
     };

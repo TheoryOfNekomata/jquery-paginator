@@ -87,7 +87,7 @@
         $page.data('pageNumber', pageNumber);
 
         $page.isBlank = function isBlank() {
-            return this.$content.$margin.children().length < 1;
+            return this.$margin.children().length < 1;
         };
 
         $page.conditionallyAppendHeader($paginator);
