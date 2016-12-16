@@ -11,6 +11,7 @@
 
         /**
          * Determines if an element can trigger page breaks.
+         * This is the criteria for determining which elements should appear on pages.
          * @param {jQuery} $el The element.
          * @returns {boolean} Is the element able to trigger page breaks?
          */
@@ -70,12 +71,14 @@
          * @see moveToModel
          */
         function print($parent) {
+            var id = 0,
+                pageBreakingChildren = [];
+
             /**
-             * Appends the page breaking element into the view.
-             * If the element is not page breaking, it scans its children for page breaking elements.
+             * Extracts the innermost page-breaking elements.
              * @param {jQuery} $child The element.
              */
-            function printPageBreakingChildren($child) {
+            function extractPageBreakingChildren($child) {
                 var $children = $child.children();
 
                 if (!hasPageBreakingChildren($child) && isPageBreakingElement($child)) {
@@ -83,7 +86,26 @@
                     // We need to get the parent so we can put back the element to the model
                     // because the data/events are still there (.clone() is expensive).
                     $child.data('modelParent', $child.parent());
+                    pageBreakingChildren.unshift($child);
+                    return;
+                }
 
+                $child.data('order', id++);
+
+                // Look into its descendants for page breaking elements.
+                $children
+                    .each(function () {
+                        var $child = $(this);
+                        extractPageBreakingChildren($child);
+                    });
+            }
+
+            /**
+             * Prints the page-breaking children.
+             */
+            function doPrintPageBreakingChildren() {
+                pageBreakingChildren.forEach(function ($child) {
+                    console.log($child.data('order'));
                     if (!$pages[ $paginator._lastPageNumber ]) {
                         // Insert paper into the tray :P
                         $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
@@ -105,18 +127,11 @@
                         $pages[ $paginator._lastPageNumber ] = $pages[ $paginator._lastPageNumber ] || new Paginator.Page($paginator, $paginator._lastPageNumber);
                         $pages[ $paginator._lastPageNumber ].$margin.append($child);
                     }
-                    return;
-                }
-
-                // Look into its descendants for page breaking elements.
-                $children
-                    .each(function () {
-                        var $child = $(this);
-                        printPageBreakingChildren($child);
-                    });
+                });
             }
 
-            printPageBreakingChildren($parent);
+            extractPageBreakingChildren($parent);
+            doPrintPageBreakingChildren();
         }
 
         /**
