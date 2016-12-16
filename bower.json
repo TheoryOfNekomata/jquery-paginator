@@ -24,6 +24,7 @@
     "tests"
   ],
   "dependencies": {
-    "jquery": ">=2.x.x"
+    "jquery": ">=2.x.x",
+    "imagesloaded": "^4.1.1"
   }
 }

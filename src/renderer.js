@@ -87,11 +87,11 @@
                     if (!$pages[ $paginator._lastPageNumber ]) {
                         // Insert paper into the tray :P
                         $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
-                        $paginator.$$view.print($pages[ $paginator._lastPageNumber ]);
+                        $paginator.$$view.append($pages[ $paginator._lastPageNumber ]);
                     }
 
                     // Print the element to the paper
-                    $pages[ $paginator._lastPageNumber ].$margin.print($child);
+                    $pages[ $paginator._lastPageNumber ].$margin.append($child);
 
                     if ($child.hasClass('page-break') ||
                         $pages[ $paginator._lastPageNumber ].needsBreaking()) {
@@ -100,10 +100,10 @@
                         $paginator._lastPageNumber++;
                         if (!$pages[ $paginator._lastPageNumber ]) {
                             $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
-                            $paginator.$$view.print($pages[ $paginator._lastPageNumber ]);
+                            $paginator.$$view.append($pages[ $paginator._lastPageNumber ]);
                         }
                         $pages[ $paginator._lastPageNumber ] = $pages[ $paginator._lastPageNumber ] || new Paginator.Page($paginator, $paginator._lastPageNumber);
-                        $pages[ $paginator._lastPageNumber ].$margin.print($child);
+                        $pages[ $paginator._lastPageNumber ].$margin.append($child);
                     }
                     return;
                 }

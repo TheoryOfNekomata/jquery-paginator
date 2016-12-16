@@ -20,13 +20,20 @@
         $paginator._renderer = new Paginator.Renderer($paginator);
         $paginator._lastPageNumber = 0;
         $paginator.$$model.on('DOMSubtreeModified', function () {
-            if (!!$paginator.data('isRendering')) {
-                return;
-            }
+            $paginator.$$model.imagesLoaded()
+                .always(function () {
+                    if (!!$paginator.data('isRendering')) {
+                        return;
+                    }
 
-            $paginator._renderer.render();
+                    $paginator._renderer.render();
+                });
         });
-        $paginator._renderer.render();
+
+        $paginator.$$model.imagesLoaded()
+            .always(function () {
+                $paginator._renderer.render();
+            });
         return $paginator;
     };
 })();

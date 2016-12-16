@@ -124,11 +124,11 @@
                     if (!$pages[ $paginator._lastPageNumber ]) {
                         // Insert paper into the tray :P
                         $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
-                        $paginator.$$view.print($pages[ $paginator._lastPageNumber ]);
+                        $paginator.$$view.append($pages[ $paginator._lastPageNumber ]);
                     }
 
                     // Print the element to the paper
-                    $pages[ $paginator._lastPageNumber ].$margin.print($child);
+                    $pages[ $paginator._lastPageNumber ].$margin.append($child);
 
                     if ($child.hasClass('page-break') ||
                         $pages[ $paginator._lastPageNumber ].needsBreaking()) {
@@ -137,10 +137,10 @@
                         $paginator._lastPageNumber++;
                         if (!$pages[ $paginator._lastPageNumber ]) {
                             $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
-                            $paginator.$$view.print($pages[ $paginator._lastPageNumber ]);
+                            $paginator.$$view.append($pages[ $paginator._lastPageNumber ]);
                         }
                         $pages[ $paginator._lastPageNumber ] = $pages[ $paginator._lastPageNumber ] || new Paginator.Page($paginator, $paginator._lastPageNumber);
-                        $pages[ $paginator._lastPageNumber ].$margin.print($child);
+                        $pages[ $paginator._lastPageNumber ].$margin.append($child);
                     }
                     return;
                 }
@@ -439,13 +439,20 @@
         $paginator._renderer = new Paginator.Renderer($paginator);
         $paginator._lastPageNumber = 0;
         $paginator.$$model.on('DOMSubtreeModified', function () {
-            if (!!$paginator.data('isRendering')) {
-                return;
-            }
+            $paginator.$$model.imagesLoaded()
+                .always(function () {
+                    if (!!$paginator.data('isRendering')) {
+                        return;
+                    }
 
-            $paginator._renderer.render();
+                    $paginator._renderer.render();
+                });
         });
-        $paginator._renderer.render();
+
+        $paginator.$$model.imagesLoaded()
+            .always(function () {
+                $paginator._renderer.render();
+            });
         return $paginator;
     };
 })();
