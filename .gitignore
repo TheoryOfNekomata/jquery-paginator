@@ -50,4 +50,3 @@ jspm_packages
 .npm
 .node_repl_history
 bower_components
-bin
