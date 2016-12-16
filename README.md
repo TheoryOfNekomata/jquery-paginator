@@ -57,9 +57,13 @@ $el
 ```
 
 ## Notes
-It is not recommended that you change the sizes of other elements.
-However, you may change aesthetic styles such as fonts, page edge
-borders etc.
+Please look at `src/style.css` for certain CSS rules that are allowed to
+be overridden with.
+
+There are certain classes that control the rendering of the pages:
+
+- `.page-break` performs a forced page break. The page break only applies as a break to the next page. It does not support breaks to odd/even pages yet.
+- `.page-block` specifies that an element can trigger page breaks. Make sure to put this on non-positioned elements. It is recommended that you put this on block elements.
 
 ## License
 Apache 2.0. See LICENSE file for details.
