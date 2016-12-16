@@ -108,7 +108,7 @@
          * @see moveToModel
          */
         function print($parent) {
-            var id = -1,
+            var id = 0,
                 pageBreakingChildren = [];
 
             /**
@@ -122,10 +122,13 @@
                     // Here is where the appending happens.
                     // We need to get the parent so we can put back the element to the model
                     // because the data/events are still there (.clone() is expensive).
-                    id = id + 1;
-                    $child.parent().data('order', id);
-                    $child.data('modelParent', $child.parent());
-                    pageBreakingChildren.unshift($child);
+                    (function (id) {
+                        $child.parent().data('order', id);
+                        $child.data('modelParent', $child.parent());
+                    })(id++);
+                    setTimeout(function () {
+                        pageBreakingChildren.push($child);
+                    });
                     return;
                 }
 
@@ -142,7 +145,6 @@
              */
             function doPrintPageBreakingChildren() {
                 pageBreakingChildren.forEach(function ($child) {
-                    console.log($child.data('order'));
                     if (!$pages[ $paginator._lastPageNumber ]) {
                         // Insert paper into the tray :P
                         $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
@@ -212,6 +214,13 @@
         function resetPages() {
             $paginator._lastPageNumber = 0;
             $pages.forEach(function ($page) {
+                $page.find('.content').children().children().each(function () {
+                    var $modelParent = $(this).data('modelParent');
+                    
+                    if (!$modelParent && $modelParent.hasClass('page-deleted')) {
+                        $(this).remove();
+                    }
+                });
                 $page.removeAttr('hidden');
             });
         }
@@ -443,7 +452,9 @@
      * @constructor
      */
     Paginator.Component = function Component($paginator, opts) {
-        var isRendering = false;
+        var isRendering = false,
+            onModelUpdate,
+            observer;
 
         //
         // Set up the component.
@@ -455,21 +466,42 @@
         $paginator.$$view = new Paginator.View($paginator);
         $paginator._renderer = new Paginator.Renderer($paginator);
         $paginator._lastPageNumber = 0;
-        $paginator.$$model.on('DOMSubtreeModified', function () {
-            $paginator.$$model.imagesLoaded()
-                .always(function () {
-                    if (!!$paginator.data('isRendering')) {
-                        return;
-                    }
 
-                    $paginator._renderer.render();
-                });
-        });
+        onModelUpdate = function () {
+            //var $deleted = $paginator.$$model.find('.page-deleted');
+            //
+            //if ($deleted.length > 0) {
+            //    $deleted.remove(); // TODO better element removal in ng-repeat etc.
+            //}
 
-        $paginator.$$model.imagesLoaded()
-            .always(function () {
+            setTimeout(function () {
+                if (!!$paginator.data('isRendering')) {
+                    return;
+                }
+
                 $paginator._renderer.render();
             });
+
+            //$paginator.$$model.imagesLoaded()
+            //    .always(function () {
+            //
+            //    });
+        };
+
+        observer = new MutationObserver(onModelUpdate);
+        observer.observe($paginator.$$model[0], {
+            attributes: true,
+            characterData: true,
+            childList: true,
+            subtree: true
+        });
+
+        //$paginator.$$model.on('DOMSubtreeModified', );
+
+        //$paginator.$$model.imagesLoaded()
+        //    .always(function () {
+                $paginator._renderer.render();
+            //});
         return $paginator;
     };
 })();

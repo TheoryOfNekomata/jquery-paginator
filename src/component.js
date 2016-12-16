@@ -7,7 +7,9 @@
      * @constructor
      */
     Paginator.Component = function Component($paginator, opts) {
-        var isRendering = false;
+        var isRendering = false,
+            onModelUpdate,
+            observer;
 
         //
         // Set up the component.
@@ -19,21 +21,42 @@
         $paginator.$$view = new Paginator.View($paginator);
         $paginator._renderer = new Paginator.Renderer($paginator);
         $paginator._lastPageNumber = 0;
-        $paginator.$$model.on('DOMSubtreeModified', function () {
-            $paginator.$$model.imagesLoaded()
-                .always(function () {
-                    if (!!$paginator.data('isRendering')) {
-                        return;
-                    }
 
-                    $paginator._renderer.render();
-                });
-        });
+        onModelUpdate = function () {
+            //var $deleted = $paginator.$$model.find('.page-deleted');
+            //
+            //if ($deleted.length > 0) {
+            //    $deleted.remove(); // TODO better element removal in ng-repeat etc.
+            //}
 
-        $paginator.$$model.imagesLoaded()
-            .always(function () {
+            setTimeout(function () {
+                if (!!$paginator.data('isRendering')) {
+                    return;
+                }
+
                 $paginator._renderer.render();
             });
+
+            //$paginator.$$model.imagesLoaded()
+            //    .always(function () {
+            //
+            //    });
+        };
+
+        observer = new MutationObserver(onModelUpdate);
+        observer.observe($paginator.$$model[0], {
+            attributes: true,
+            characterData: true,
+            childList: true,
+            subtree: true
+        });
+
+        //$paginator.$$model.on('DOMSubtreeModified', );
+
+        //$paginator.$$model.imagesLoaded()
+        //    .always(function () {
+                $paginator._renderer.render();
+            //});
         return $paginator;
     };
 })();

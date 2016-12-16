@@ -71,7 +71,7 @@
          * @see moveToModel
          */
         function print($parent) {
-            var id = -1,
+            var id = 0,
                 pageBreakingChildren = [];
 
             /**
@@ -85,10 +85,13 @@
                     // Here is where the appending happens.
                     // We need to get the parent so we can put back the element to the model
                     // because the data/events are still there (.clone() is expensive).
-                    id = id + 1;
-                    $child.parent().data('order', id);
-                    $child.data('modelParent', $child.parent());
-                    pageBreakingChildren.unshift($child);
+                    (function (id) {
+                        $child.parent().data('order', id);
+                        $child.data('modelParent', $child.parent());
+                    })(id++);
+                    setTimeout(function () {
+                        pageBreakingChildren.push($child);
+                    });
                     return;
                 }
 
@@ -105,7 +108,6 @@
              */
             function doPrintPageBreakingChildren() {
                 pageBreakingChildren.forEach(function ($child) {
-                    console.log($child.data('order'));
                     if (!$pages[ $paginator._lastPageNumber ]) {
                         // Insert paper into the tray :P
                         $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
@@ -175,6 +177,13 @@
         function resetPages() {
             $paginator._lastPageNumber = 0;
             $pages.forEach(function ($page) {
+                $page.find('.content').children().children().each(function () {
+                    var $modelParent = $(this).data('modelParent');
+
+                    if (!$modelParent && $modelParent.hasClass('page-deleted')) {
+                        $(this).remove();
+                    }
+                });
                 $page.removeAttr('hidden');
             });
         }
