@@ -180,7 +180,7 @@
                 $page.find('.content').children().children().each(function () {
                     var $modelParent = $(this).data('modelParent');
 
-                    if (!$modelParent && $modelParent.hasClass('page-deleted')) {
+                    if (!!$modelParent && $modelParent.hasClass('page-deleted')) {
                         $(this).remove();
                     }
                 });
