@@ -71,7 +71,7 @@
          * @see moveToModel
          */
         function print($parent) {
-            var id = 0,
+            var id = -1,
                 pageBreakingChildren = [];
 
             /**
@@ -85,12 +85,12 @@
                     // Here is where the appending happens.
                     // We need to get the parent so we can put back the element to the model
                     // because the data/events are still there (.clone() is expensive).
+                    id = id + 1;
+                    $child.parent().data('order', id);
                     $child.data('modelParent', $child.parent());
                     pageBreakingChildren.unshift($child);
                     return;
                 }
-
-                $child.data('order', id++);
 
                 // Look into its descendants for page breaking elements.
                 $children
@@ -131,7 +131,9 @@
             }
 
             extractPageBreakingChildren($parent);
-            doPrintPageBreakingChildren();
+            setTimeout(function () {
+                doPrintPageBreakingChildren();
+            });
         }
 
         /**

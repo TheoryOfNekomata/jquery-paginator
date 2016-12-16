@@ -14,7 +14,7 @@
         var html = '';
 
         for (var i = 1; i <= 100; i++) {
-            html += '<span><span id="el-' + i + '" style="display: block"><span id="el-child-' + i + '" style="display: block;"><span>The quick brown fox jumps over the lazy dog.</span></span></span></span>';
+            html += '<span><span id="el-' + i + '" class="page-block"><span id="el-child-' + i + '" style="display: block;"><span>The quick brown fox jumps over the lazy dog.</span></span></span></span>';
         }
 
         $paginationEl
