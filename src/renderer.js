@@ -1,6 +1,4 @@
 (function () {
-    var test = false;
-
     /**
      * Class for the paginator's renderer, the component in charge of displaying
      * elements from the model to the view without losing data, as well as preserving
@@ -12,11 +10,20 @@
         var $pages = [];
 
         /**
+         * Determines if an element can trigger page breaks.
+         * @param {jQuery} $el The element.
+         * @returns {boolean} Is the element able to trigger page breaks?
+         */
+        function isPageBreakingElement($el) {
+            return $el.hasClass('page-block') || $el.hasClass('page-break');
+        }
+
+        /**
          * Gets a value indicating if an element has block children (excluding itself).
          * @param {jQuery} $el The element.
          * @returns {boolean} Does the element have block children?
          */
-        function hasKidsOnTheBlock($el) {
+        function hasPageBreakingChildren($el) {
             var hasKidz = false,
                 $kidz = $el.children();
 
@@ -26,7 +33,7 @@
              * @param {boolean} isBloke Is itself or its children blocks?
              * @returns {boolean} Is the element or its children blocks?
              */
-            function isBlockHead($kiddo, isBloke) {
+            function isPageBreakingParent($kiddo, isBloke) {
                 var $children = $kiddo.children();
 
                 if ($children.length < 1) {
@@ -37,7 +44,7 @@
                     .each(function () {
                         var $kiddo = $(this);
 
-                        isBloke = $kiddo.css('display') === 'block' || isBlockHead($kiddo, isBloke);
+                        isBloke = isPageBreakingElement($kiddo) || isPageBreakingParent($kiddo, isBloke);
                     });
 
                 return isBloke;
@@ -51,55 +58,65 @@
                 .each(function () {
                     var $kiddo = $(this);
 
-                    hasKidz = $kiddo.css('display') === 'block' || isBlockHead($kiddo, hasKidz);
+                    hasKidz = isPageBreakingElement($kiddo) || isPageBreakingParent($kiddo, hasKidz);
                 });
 
             return hasKidz;
         }
 
         /**
-         * Appends the children of an element to the view on its corresponding page.
+         * Appends the page-breaking children of an element to the view on its corresponding page.
          * @param {jQuery} $parent The parent element.
          * @see moveToModel
          */
-        function append($parent) {
-            function appendChild($child) {
+        function print($parent) {
+            /**
+             * Appends the page breaking element into the view.
+             * If the element is not page breaking, it scans its children for page breaking elements.
+             * @param {jQuery} $child The element.
+             */
+            function printPageBreakingChildren($child) {
                 var $children = $child.children();
 
-                if (!hasKidsOnTheBlock($child) && $child.css('display') === 'block') {
+                if (!hasPageBreakingChildren($child) && isPageBreakingElement($child)) {
                     // Here is where the appending happens.
                     // We need to get the parent so we can put back the element to the model
                     // because the data/events are still there (.clone() is expensive).
                     $child.data('modelParent', $child.parent());
 
                     if (!$pages[ $paginator._lastPageNumber ]) {
+                        // Insert paper into the tray :P
                         $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
-                        $paginator.$$view.append($pages[ $paginator._lastPageNumber ]);
+                        $paginator.$$view.print($pages[ $paginator._lastPageNumber ]);
                     }
 
-                    $pages[ $paginator._lastPageNumber ].$margin.append($child);
+                    // Print the element to the paper
+                    $pages[ $paginator._lastPageNumber ].$margin.print($child);
 
-                    if ($pages[ $paginator._lastPageNumber ].needsBreaking()) {
+                    if ($child.hasClass('page-break') ||
+                        $pages[ $paginator._lastPageNumber ].needsBreaking()) {
+                        // Perform the page break when the page content goes larger than the content area
+                        // or when a page break element is encountered.
                         $paginator._lastPageNumber++;
                         if (!$pages[ $paginator._lastPageNumber ]) {
                             $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
-                            $paginator.$$view.append($pages[ $paginator._lastPageNumber ]);
+                            $paginator.$$view.print($pages[ $paginator._lastPageNumber ]);
                         }
                         $pages[ $paginator._lastPageNumber ] = $pages[ $paginator._lastPageNumber ] || new Paginator.Page($paginator, $paginator._lastPageNumber);
-                        $pages[ $paginator._lastPageNumber ].$margin.append($child);
+                        $pages[ $paginator._lastPageNumber ].$margin.print($child);
                     }
                     return;
                 }
 
+                // Look into its descendants for page breaking elements.
                 $children
                     .each(function () {
                         var $child = $(this);
-
-                        appendChild($child);
+                        printPageBreakingChildren($child);
                     });
             }
 
-            appendChild($parent);
+            printPageBreakingChildren($parent);
         }
 
         /**
@@ -145,6 +162,10 @@
             });
         }
 
+        /**
+         * Set the visibility of the pages. This is to determine
+         * if pages have content to be displayed in the viewport.
+         */
         function setPagesVisibility() {
             $pages.forEach(function ($page) {
                 if ($page.data('pageNumber') < 1 || !$page.isBlank()) {
@@ -158,19 +179,21 @@
          * Renders the elements from the paginator's model.
          */
         this.render = function render() {
+            // Lock the paginator
+            //
+            // TODO queue writes?
             $paginator.data('isRendering', true);
-            if (!test) {
-                resetPages();
-                setTimeout(function () {
-                    $paginator.$$model.children('.content').children().each(function () {
-                        append($(this));
-                    });
-                    setTimeout(function () {
-                        setPagesVisibility();
-                        $paginator.data('isRendering', false);
-                    });
+            resetPages();
+            setTimeout(function () {
+                $paginator.$$model.children('.content').children().each(function () {
+                    print($(this));
                 });
-            }
+                setTimeout(function () {
+                    setPagesVisibility();
+                    // Unlock it
+                    $paginator.data('isRendering', false);
+                });
+            });
         };
     };
 })();

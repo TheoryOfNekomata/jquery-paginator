@@ -2,12 +2,14 @@
   box-sizing: border-box;
 }
 
+/* Hide the models */
 .paginator > .model {
   display: none;
 }
 
 .paginator .page {
   border: 1px solid;
+  overflow: hidden; /* You can't have run-off content outside the pages :P */
 }
 
 @media only screen {
@@ -18,39 +20,6 @@
   .paginator .page {
     position: relative;
     border-color: #000;
-  }
-
-  /* customizable page params */
-
-  .paginator .header > .margin {
-    margin: 0.5in 1in;
-  }
-
-  .paginator .footer > .margin {
-    margin: 0.5in 1in;
-  }
-
-  .paginator .content > .margin {
-    margin: 1in;
-  }
-
-  .paginator .page {
-    overflow: hidden;
-  }
-
-  .paginator .page + .page {
-    margin-top: 30px;
-  }
-
-  .paginator .view {
-    margin: 30px;
-  }
-
-  .paginator .page::after {
-    bottom: -30px;
-    right: -30px;
-    width: 30px;
-    height: 30px;
   }
 
   .paginator .page > .header {
@@ -96,24 +65,4 @@
     bottom: 0;
     left: 0;
   }
-}
-
-/* customizable page params */
-
-.paginator .header > .margin {
-  margin: 0.5in 1in;
-}
-
-.paginator .footer > .margin {
-  margin: 0.5in 1in;
-}
-
-.paginator .content > .margin {
-  margin: 1in;
-}
-
-.paginator .page {
-  width: 8.5in;
-  height: 11in;
-  background-color: #fff;
 }

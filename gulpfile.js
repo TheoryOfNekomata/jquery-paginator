@@ -17,7 +17,8 @@ var
     ],
 
     styles = [
-        './src/style.css'
+        './src/style.css',
+        './src/settings.css'
     ],
 
     /**

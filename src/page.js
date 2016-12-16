@@ -2,6 +2,7 @@
     /**
      * Class for the paginator's page.
      * @param {Paginator.Component} $paginator The paginator.
+     * @param {number} pageNumber The page number.
      * @returns {jQuery} The page element.
      * @constructor
      */
@@ -11,13 +12,8 @@
         settings = $paginator.data('settings');
 
         $page = $('<div>');
-        $page.addClass('page');
-
         $page.$content = $('<div>');
-        $page.$content.addClass('content');
-
         $page.$margin = $('<div>');
-        $page.$margin.addClass('margin');
 
         /**
          * Gets the height of the page that can allow content.
@@ -88,16 +84,27 @@
             }
         };
 
-        $page.data('pageNumber', pageNumber);
-
+        /**
+         * Determines if the page is blank
+         * @returns {boolean} Is the page blank?
+         */
         $page.isBlank = function isBlank() {
             return this.$margin.children().length < 1;
         };
 
+        //
+        // Set up the pages.
+        //
+
+        $page.data('pageNumber', pageNumber);
+        $page.addClass('page');
+        $page.$content.addClass('content');
+        $page.$margin.addClass('margin');
+        $page.$content.append($page.$margin);
+
         $page.conditionallyAppendHeader($paginator);
         $page.conditionallyAppendFooter($paginator);
         $page.append($page.$content);
-        $page.$content.append($page.$margin);
 
         return $page;
     }

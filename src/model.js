@@ -11,13 +11,20 @@
         $$model = $('<div>');
         $$model.addClass('model');
 
+        /**
+         * Marks the model elements
+         * @param {jQuery} $parent The parent element
+         */
         function markChildren($parent) {
             $parent.children().each(function () {
                 markChildren($(this).addClass('-model'));
             });
         }
 
-        // Mount!
+        //
+        // Set up the model.
+        //
+
         $paginator
             .children()
             .each(function () {

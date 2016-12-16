@@ -9,6 +9,11 @@
         var $$view;
 
         $$view = $('<div>');
+
+        //
+        // Set up the view.
+        //
+
         $$view.addClass('view');
 
         $paginator.append($$view);
