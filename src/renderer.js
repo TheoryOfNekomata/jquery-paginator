@@ -121,7 +121,6 @@
 
                     // Print the element to the paper
                     $pages[ $paginator._lastPageNumber ].$margin.append($child);
-
                     $child.insertBefore($paginator.$$view.find('[data-order=' + (i + 1) + ']'));
 
                     if ($child.hasClass('page-break') ||
@@ -162,20 +161,6 @@
             }
 
             $element.data('modelParent').appendChild($element);
-        }
-
-        /**
-         * Moves all the elements from the view to the model.
-         */
-        function resetModel() {
-            var $viewEl = $paginator.$$view.find('.page')
-                .find('.content')
-                .children()
-                .children();
-
-            $viewEl.each(function () {
-                moveToModel($(this));
-            });
         }
 
         /**

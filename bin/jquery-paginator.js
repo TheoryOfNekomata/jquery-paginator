@@ -158,7 +158,6 @@
 
                     // Print the element to the paper
                     $pages[ $paginator._lastPageNumber ].$margin.append($child);
-
                     $child.insertBefore($paginator.$$view.find('[data-order=' + (i + 1) + ']'));
 
                     if ($child.hasClass('page-break') ||
@@ -199,20 +198,6 @@
             }
 
             $element.data('modelParent').appendChild($element);
-        }
-
-        /**
-         * Moves all the elements from the view to the model.
-         */
-        function resetModel() {
-            var $viewEl = $paginator.$$view.find('.page')
-                .find('.content')
-                .children()
-                .children();
-
-            $viewEl.each(function () {
-                moveToModel($(this));
-            });
         }
 
         /**
@@ -310,16 +295,22 @@
          * Appends the header depending on the conditions in the paginator options.
          */
         $page.conditionallyAppendHeader = function conditionallyAppendHeader() {
-            var $header;
+            var $headers, $header, headerIndex;
 
-            $header = $paginator.$$model.find('.header');
+            $headers = $paginator.$$model.find('.header');
 
-            if ($header.length > 0) {
-                $header = $header.eq($header.length > 1 ? (($paginator._lastPageNumber) % $header.length) : 0).clone(true, true);
+            if ($headers.length > 0) {
+                console.log($headers.length);
+                headerIndex = $headers.length > 1 ? (($paginator._lastPageNumber) % $headers.length) : 0;
+                console.log(headerIndex);
+                $header = $headers.eq(headerIndex).clone(true, true);
+                console.log($header);
 
-                if ($header.hasClass('terminal') && $paginator._lastPageNumber !== 1) {
+                if ($headers.hasClass('terminal') && $paginator._lastPageNumber !== 1) {
                     return;
                 }
+
+                console.log(this);
 
                 $header.children().wrapAll('<div class="margin">');
 
@@ -372,8 +363,8 @@
         $page.$margin.addClass('margin');
         $page.$content.append($page.$margin);
 
-        $page.conditionallyAppendHeader($paginator);
-        $page.conditionallyAppendFooter($paginator);
+        $page.conditionallyAppendHeader();
+        $page.conditionallyAppendFooter();
         $page.append($page.$content);
 
         return $page;

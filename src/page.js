@@ -40,14 +40,15 @@
          * Appends the header depending on the conditions in the paginator options.
          */
         $page.conditionallyAppendHeader = function conditionallyAppendHeader() {
-            var $header;
+            var $headers, $header, headerIndex;
 
-            $header = $paginator.$$model.find('.header');
+            $headers = $paginator.$$model.find('.header');
 
-            if ($header.length > 0) {
-                $header = $header.eq($header.length > 1 ? (($paginator._lastPageNumber) % $header.length) : 0).clone(true, true);
+            if ($headers.length > 0) {
+                headerIndex = $headers.length > 1 ? (($paginator._lastPageNumber) % $headers.length) : 0;
+                $header = $headers.eq(headerIndex).clone(true, true);
 
-                if ($header.hasClass('terminal') && $paginator._lastPageNumber !== 1) {
+                if ($headers.hasClass('terminal') && $paginator._lastPageNumber !== 1) {
                     return;
                 }
 
@@ -64,14 +65,15 @@
          * Appends the footer depending on the conditions in the paginator options.
          */
         $page.conditionallyAppendFooter = function conditionallyAppendFooter() {
-            var $footer;
+            var $footers, $footer, footerIndex;
 
-            $footer = $paginator.$$model.find('.footer');
+            $footers = $paginator.$$model.find('.footer');
 
-            if ($footer.length > 0) {
-                $footer = $footer.eq($footer.length > 1 ? (($paginator._lastPageNumber) % $footer.length) : 0).clone(true, true);
+            if ($footers.length > 0) {
+                footerIndex = $footers.length > 1 ? (($paginator._lastPageNumber) % $footers.length) : 0;
+                $footer = $footers.eq(footerIndex).clone(true, true);
 
-                if ($footer.hasClass('terminal') && $paginator._lastPageNumber !== 1) {
+                if ($footers.hasClass('terminal') && $paginator._lastPageNumber !== 1) {
                     return;
                 }
 
@@ -79,7 +81,7 @@
 
                 this.append($footer);
                 setTimeout(function () {
-                    $page.$content.css('margin-bottom', $footer.height());
+                    $page.$content.css('margin-top', $footer.height());
                 });
             }
         };
@@ -102,8 +104,8 @@
         $page.$margin.addClass('margin');
         $page.$content.append($page.$margin);
 
-        $page.conditionallyAppendHeader($paginator);
-        $page.conditionallyAppendFooter($paginator);
+        $page.conditionallyAppendHeader();
+        $page.conditionallyAppendFooter();
         $page.append($page.$content);
 
         return $page;
