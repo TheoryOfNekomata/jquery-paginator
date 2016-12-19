@@ -71,7 +71,7 @@
          * @see moveToModel
          */
         function print($parent) {
-            var id = 0,
+            var parents = [],
                 pageBreakingChildren = [];
 
             /**
@@ -79,16 +79,20 @@
              * @param {jQuery} $child The element.
              */
             function extractPageBreakingChildren($child) {
-                var $children = $child.children();
+                var $children = $child.children(),
+                    $parent;
 
                 if (!hasPageBreakingChildren($child) && isPageBreakingElement($child)) {
                     // Here is where the appending happens.
                     // We need to get the parent so we can put back the element to the model
                     // because the data/events are still there (.clone() is expensive).
-                    (function (id) {
-                        $child.parent().data('order', id);
-                        $child.data('modelParent', $child.parent());
-                    })(id++);
+                    $parent = $child.parent();
+                    $child.data('modelParent', $parent);
+
+                    if (parents.indexOf($parent[0]) < 0) {
+                        parents.push($parent[0]);
+                    }
+
                     setTimeout(function () {
                         pageBreakingChildren.push($child);
                     });
@@ -107,7 +111,8 @@
              * Prints the page-breaking children.
              */
             function doPrintPageBreakingChildren() {
-                pageBreakingChildren.forEach(function ($child) {
+                pageBreakingChildren.forEach(function ($child, i) {
+                    $child.attr('data-order', i);
                     if (!$pages[ $paginator._lastPageNumber ]) {
                         // Insert paper into the tray :P
                         $pages[ $paginator._lastPageNumber ] = new Paginator.Page($paginator, $paginator._lastPageNumber);
@@ -116,6 +121,8 @@
 
                     // Print the element to the paper
                     $pages[ $paginator._lastPageNumber ].$margin.append($child);
+
+                    $child.insertBefore($paginator.$$view.find('[data-order=' + (i + 1) + ']'));
 
                     if ($child.hasClass('page-break') ||
                         $pages[ $paginator._lastPageNumber ].needsBreaking()) {
