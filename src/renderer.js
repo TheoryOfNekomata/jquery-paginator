@@ -187,7 +187,7 @@
                 $page.find('.content').children().children().each(function () {
                     var $modelParent = $(this).data('modelParent');
 
-                    if (!!$modelParent && $modelParent.hasClass('page-deleted')) {
+                    if (!!$modelParent && $modelParent.hasClass('page-deleted') || $modelParent.parents('.page-deleted').length > 0) {
                         $(this).remove();
                     }
                 });
