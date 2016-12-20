@@ -1,35 +1,39 @@
-.paginator, .paginator * {
+.paginator-component, .paginator-component * {
   box-sizing: border-box;
 }
 
 /* Hide the models */
-.paginator > .model {
+.paginator-component > .model {
   display: none;
 }
 
-.paginator .page {
+.paginator-component .page {
   border: 1px solid;
+  position: relative;
   overflow: hidden; /* You can't have run-off content outside the pages :P */
 }
 
+.paginator-component .page > .footer.terminal {
+
+}
+
 @media only screen {
-  .paginator .page > .padding {
+  .paginator-component .page > .padding {
     position: absolute;
   }
 
-  .paginator .page {
-    position: relative;
+  .paginator-component .page {
     border-color: #000;
   }
 
-  .paginator .page > .header {
+  .paginator-component .page > .header {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
   }
 
-  .paginator .page > .footer {
+  .paginator-component .page > .footer {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -37,7 +41,7 @@
   }
 
   /* viewport padding, because you can't scroll further down or right */
-  .paginator .page::after {
+  .paginator-component .page::after {
     content: ' ';
     display: block;
     position: absolute;
@@ -45,23 +49,22 @@
 }
 
 @media only print {
-  .paginator .content > .margin {
+  .paginator-component .content > .margin {
     margin-bottom: 0 !important;
   }
 
-  .paginator .page {
+  .paginator-component .page {
     border-color: transparent;
     page-break-inside: avoid;
   }
 
-  .paginator .page > .header {
-    position: fixed;
-    top: 0;
+  .paginator-component .page > .header {
+    position: absolute;
     left: 0;
   }
 
-  .paginator .page > .footer {
-    position: fixed;
+  .paginator-component .page > .footer {
+    position: absolute;
     bottom: 0;
     left: 0;
   }

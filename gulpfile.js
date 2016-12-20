@@ -5,15 +5,7 @@ var
      * @type {string[]}
      */
     scripts = [
-        './src/init.js',
-        './src/settings/component.js',
-        './src/settings.js',
-        './src/renderer.js',
-        './src/page.js',
-        './src/model.js',
-        './src/view.js',
-        './src/component.js',
-        './src/definition.js'
+        './src/paginator.js'
     ],
 
     styles = [

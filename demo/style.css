@@ -1,20 +1,60 @@
 /* just set margins to have metric units */
 
-.paginator .header > .margin {
+.paginator-component .header > .margin {
   margin: 1cm 1.5cm;
 }
 
-.paginator .footer > .margin {
+.paginator-component .footer > .margin {
   margin: 1cm 1.5cm;
 }
 
-.paginator .content > .margin {
+.paginator-component .content > .margin {
   margin: 2cm;
 }
 
 /* set page size to A4 */
 
-.paginator .page {
+.paginator-component .page {
   width: 210mm;
   height: 297mm;
+}
+
+/* test */
+
+div.tleft {
+  float: left;
+  clear: left;
+  margin: 1em;
+}
+
+div.tright {
+  float: right;
+  clear: right;
+  margin: 1em;
+}
+
+.toc {
+  display: none;
+}
+
+a:link,
+a:visited,
+a:hover,
+a:focus,
+a:active {
+  text-decoration: none;
+  color: inherit;
+}
+
+p {
+  text-align: justify;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+.thumbcaption {
+  font-size: 80%;
+  text-align: justify;
 }
