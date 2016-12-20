@@ -56,7 +56,7 @@
             footerIndex = pageNumber % footerCount;
             $footer = $footers.eq(footerIndex).clone(true, true);
 
-            console.log($footer.hasClass('terminal'), pageNumber, $paginator.data('lastPageNumber'));
+            console.log($paginator.data('lastPageNumber'));
 
             if ($footer.hasClass('terminal') && pageNumber < $paginator.data('lastPageNumber') - 1) {
                 return;
@@ -242,11 +242,8 @@
         }
 
         function showAllPages() {
-            $pages.forEach(function ($page, i) {
-                console.log('asdfasdf');
-                $page
-                    .removeAttr('hidden')
-                    .setPageNumber(i);
+            $pages.forEach(function ($page) {
+                $page.removeAttr('hidden');
             });
         }
 
@@ -261,7 +258,7 @@
 
         function resetPageNumber() {
             $paginator.trigger('paginator.pagenumberchange', { lastPageNumber: lastPageNumber });
-            $paginator.data('lastPageNumber', $view.find('.page').length);
+            $paginator.data('lastPageNumber', lastPageNumber = 0);
         }
 
         function doRender() {
