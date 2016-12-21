@@ -56,7 +56,7 @@
             footerIndex = pageNumber % footerCount;
             $footer = $footers.eq(footerIndex).clone(true, true);
 
-            console.log($paginator.data('lastPageNumber'));
+            console.log($footer.hasClass('terminal'), pageNumber, $paginator.data('lastPageNumber'));
 
             if ($footer.hasClass('terminal') && pageNumber < $paginator.data('lastPageNumber') - 1) {
                 return;
@@ -84,6 +84,8 @@
                 $footer = this.find('.footer'),
                 topHeight = Math.max($header.length > 0 ? $header.height() : 0, parseInt($margin.css('margin-top'))),
                 bottomHeight = Math.max($footer.length > 0 ? $footer.height() : 0, parseInt($margin.css('margin-top')));
+
+            console.log(this, this.height());
 
             return this.height() - topHeight - bottomHeight;
         };
@@ -119,6 +121,7 @@
             modelObserver = new MutationObserver(onWatchChange),
             lastPageNumber = 0,
             $pages = [],
+            pageBlockClass = 'page-block',
             pageAddedClass = 'page-added',
             pageDeletedClass = 'page-deleted',
             $modelParents = [];
@@ -129,7 +132,7 @@
 
         function layoutContent() {
             $model
-                .find(toClassSelector(pageAddedClass))
+                .find(toClassSelector(pageBlockClass))
                 .each(function () {
                     var $content = $(this),
                         $modelParent = $content.parent();
@@ -139,7 +142,10 @@
                     }
 
                     $modelParent.attr('data-order', 0);
-                    $content.data('$modelParent', $modelParent);
+                    $content
+                        .data('$modelParent', $modelParent)
+                        .removeClass(pageBlockClass)
+                        .addClass(pageAddedClass);
                     $modelParents.push($modelParent);
                     $pages[0].find('.content').find('.margin').append($content);
                 });
@@ -191,6 +197,8 @@
                             height = $this.height(),
                             pageContentLowerBoundary = parseInt($page.find('.content').css('margin-top')) + contentHeight;
 
+                        console.log($this, position + height, pageContentLowerBoundary, contentHeight);
+
                         pageHasBreaks = pageHasBreaks || position + height > pageContentLowerBoundary;
                     });
 
@@ -238,12 +246,15 @@
 
             do {
                 splitContent(pagesWithBreaks = getPagesWithBreaks());
+                console.log(pagesWithBreaks);
             } while (pagesWithBreaks.length > 0);
         }
 
         function showAllPages() {
-            $pages.forEach(function ($page) {
-                $page.removeAttr('hidden');
+            $pages.forEach(function ($page, i) {
+                $page
+                    .removeAttr('hidden')
+                    .setPageNumber(i);
             });
         }
 
@@ -258,7 +269,7 @@
 
         function resetPageNumber() {
             $paginator.trigger('paginator.pagenumberchange', { lastPageNumber: lastPageNumber });
-            $paginator.data('lastPageNumber', lastPageNumber = 0);
+            $paginator.data('lastPageNumber', $view.find('.page').length);
         }
 
         function doRender() {
@@ -268,6 +279,10 @@
                 $view.append(
                     $pages[lastPageNumber] = new Page($paginator, lastPageNumber)
                 );
+
+                if ($view.find('.page').css('height') === 'auto') {
+                    throw new Error('Page dimensions should be explicitly set up! Either you have not included the default style or pages\' dimensions have been set to auto.');
+                }
             }
             showAllPages();
             layoutContent();
@@ -322,3 +337,5 @@
         });
     };
 })();
+
+//# sourceMappingURL=jquery-paginator.js.map

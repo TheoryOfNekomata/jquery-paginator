@@ -28,38 +28,47 @@ var
     gulp = require('gulp'),
     concat = require('gulp-concat'),
     uglify = require('gulp-uglify'),
-    csso = require('gulp-csso');
+    csso = require('gulp-csso'),
+    sourcemaps = require('gulp-sourcemaps');
 
 if (name.indexOf('/') > -1) {
     name = name.slice(name.indexOf('/') + 1);
 }
 
 gulp.task('compile-scripts', function (cb) {
-    gulp.src(scripts)
+    gulp.src(scripts, { base: './src' })
+        .pipe(sourcemaps.init())
         .pipe(concat(name + '.js'))
+        .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(output))
         .on('end', cb);
 });
 
 gulp.task('compile-scripts-minified', function (cb) {
-    gulp.src(scripts)
+    gulp.src(scripts, { base: './src' })
+        .pipe(sourcemaps.init())
         .pipe(concat(name + '.min.js'))
         .pipe(uglify())
+        .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(output))
         .on('end', cb);
 });
 
 gulp.task('compile-styles', function (cb) {
-    gulp.src(styles)
+    gulp.src(styles, { base: './src' })
+        .pipe(sourcemaps.init())
         .pipe(concat(name + '.css'))
+        .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(output))
         .on('end', cb);
 });
 
 gulp.task('compile-styles-minified', function (cb) {
-    gulp.src(styles)
+    gulp.src(styles, { base: './src' })
+        .pipe(sourcemaps.init())
         .pipe(concat(name + '.min.css'))
         .pipe(csso())
+        .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(output))
         .on('end', cb);
 });
