@@ -56,8 +56,6 @@
             footerIndex = pageNumber % footerCount;
             $footer = $footers.eq(footerIndex).clone(true, true);
 
-            console.log($footer.hasClass('terminal'), pageNumber, $paginator.data('lastPageNumber'));
-
             if ($footer.hasClass('terminal') && pageNumber < $paginator.data('lastPageNumber') - 1) {
                 return;
             }
@@ -84,8 +82,6 @@
                 $footer = this.find('.footer'),
                 topHeight = Math.max($header.length > 0 ? $header.height() : 0, parseInt($margin.css('margin-top'))),
                 bottomHeight = Math.max($footer.length > 0 ? $footer.height() : 0, parseInt($margin.css('margin-top')));
-
-            console.log(this, this.height());
 
             return this.height() - topHeight - bottomHeight;
         };
@@ -164,6 +160,11 @@
                     var $content = $(this),
                         $modelParent = $content.data('$modelParent');
 
+                    if (!$modelParent) {
+                        $content.remove();
+                        return;
+                    }
+
                     if (!($modelParent.hasClass(pageDeletedClass) ||
                         $modelParent.parents().length < 1 ||
                         $modelParent.parents(toClassSelector(pageDeletedClass)).length > 0)) {
@@ -189,15 +190,19 @@
 
                 $pages.forEach(function ($page, i) {
                     var contentHeight = $page.getContentHeight(),
-                        pageHasBreaks = false;
+                        pageHasBreaks = false,
+                        $contents = $page.find('.content').find('.margin').children();
 
-                    $page.find('.content').find('.margin').children().each(function () {
+                    $contents.each(function (j) {
                         var $this = $(this),
                             position = $this.position().top,
                             height = $this.height(),
                             pageContentLowerBoundary = parseInt($page.find('.content').css('margin-top')) + contentHeight;
 
-                        console.log($this, position + height, pageContentLowerBoundary, contentHeight);
+                        if ($this.hasClass('page-break') || (j < $pages.length - 1)) {
+                            pageHasBreaks = true;
+                            return;
+                        }
 
                         pageHasBreaks = pageHasBreaks || position + height > pageContentLowerBoundary;
                     });
@@ -215,10 +220,11 @@
             }
 
             function splitContent(pageNumbers) {
-                pageNumbers.forEach(function (pageNumber) {
+                pageNumbers.forEach(function (pageNumber, i) {
                     var toNextPage = [],
                         $page = $pages[pageNumber],
-                        contentHeight = $page.getContentHeight();
+                        contentHeight = $page.getContentHeight(),
+                        hasPageBreak = false;
 
                     $page.find('.content').find('.margin').children().each(function () {
                         var $this = $(this),
@@ -227,7 +233,12 @@
                             pageMargin = parseInt($page.find('.content').css('margin-top')),
                             pageContentLowerBoundary = pageMargin + contentHeight;
 
-                        if (position + height > pageContentLowerBoundary) {
+                        if ($this.hasClass('page-break') && (!$pages[pageNumber + 1] || $pages[pageNumber + 1 ].find('.content').find('.margin').children().length < 1)) {
+                            hasPageBreak = true;
+                            return;
+                        }
+
+                        if (hasPageBreak || position + height > pageContentLowerBoundary) {
                             toNextPage.unshift(this);
                         }
                     });
@@ -246,7 +257,6 @@
 
             do {
                 splitContent(pagesWithBreaks = getPagesWithBreaks());
-                console.log(pagesWithBreaks);
             } while (pagesWithBreaks.length > 0);
         }
 
