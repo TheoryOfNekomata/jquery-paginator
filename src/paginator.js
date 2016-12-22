@@ -193,13 +193,13 @@
                         pageHasBreaks = false,
                         $contents = $page.find('.content').find('.margin').children();
 
-                    $contents.each(function (j) {
+                    $contents.each(function () {
                         var $this = $(this),
                             position = $this.position().top,
                             height = $this.height(),
                             pageContentLowerBoundary = parseInt($page.find('.content').css('margin-top')) + contentHeight;
 
-                        if ($this.hasClass('page-break') || (j < $pages.length - 1)) {
+                        if ($this.hasClass('page-break') && i < $pages.length - 1) {
                             pageHasBreaks = true;
                             return;
                         }

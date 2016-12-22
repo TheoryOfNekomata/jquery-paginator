@@ -61,12 +61,14 @@
   .paginator-component .page > .header {
     position: absolute;
     left: 0;
+    width: 100%;
   }
 
   .paginator-component .page > .footer {
     position: absolute;
     bottom: 0;
     left: 0;
+    width: 100%;
   }
 }
 

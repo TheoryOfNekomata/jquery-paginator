@@ -190,9 +190,10 @@
 
                 $pages.forEach(function ($page, i) {
                     var contentHeight = $page.getContentHeight(),
-                        pageHasBreaks = false;
+                        pageHasBreaks = false,
+                        $contents = $page.find('.content').find('.margin').children();
 
-                    $page.find('.content').find('.margin').children().each(function () {
+                    $contents.each(function () {
                         var $this = $(this),
                             position = $this.position().top,
                             height = $this.height(),
