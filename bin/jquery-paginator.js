@@ -199,11 +199,6 @@
                             height = $this.height(),
                             pageContentLowerBoundary = parseInt($page.find('.content').css('margin-top')) + contentHeight;
 
-                        if ($this.hasClass('page-break') && i < $pages.length - 1) {
-                            pageHasBreaks = true;
-                            return;
-                        }
-
                         pageHasBreaks = pageHasBreaks || position + height > pageContentLowerBoundary;
                     });
 
@@ -233,10 +228,12 @@
                             pageMargin = parseInt($page.find('.content').css('margin-top')),
                             pageContentLowerBoundary = pageMargin + contentHeight;
 
-                        if ($this.hasClass('page-break') && (!$pages[pageNumber + 1] || $pages[pageNumber + 1 ].find('.content').find('.margin').children().length < 1)) {
-                            hasPageBreak = true;
-                            return;
-                        }
+                        //hasPageBreak = hasPageBreak || $this.hasClass('page-break');
+
+                        //if ($this.hasClass('page-break') && (!$pages[pageNumber + 1] || $pages[pageNumber + 1 ].find('.content').find('.margin').children().length < 1)) {
+                        //    hasPageBreak = true;
+                        //    return;
+                        //}
 
                         if (hasPageBreak || position + height > pageContentLowerBoundary) {
                             toNextPage.unshift(this);
