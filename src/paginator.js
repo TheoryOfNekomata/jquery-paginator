@@ -137,6 +137,8 @@
                         return;
                     }
 
+                    console.log($modelParent);
+
                     $modelParent.attr('data-order', 0);
                     $content
                         .data('$modelParent', $modelParent)
@@ -168,9 +170,9 @@
                     if (!($modelParent.hasClass(pageDeletedClass) ||
                         $modelParent.parents().length < 1 ||
                         $modelParent.parents(toClassSelector(pageDeletedClass)).length > 0)) {
-                        if ($content.css('float') === 'none') {
+                        //if ($content.css('float') === 'none') {
                             $content.attr('data-order', $modelParent.attr('data-order'));
-                        }
+                        //}
                         return;
                     }
 
@@ -179,7 +181,29 @@
         }
 
         function orderContent() {
+            var $children = $view.find('.content').find('.margin').children();
 
+            $children
+                .each(function () {
+                    var $content = $(this),
+                        $prev = $content.prev(),
+                        $modelParent,
+                        $prevParent;
+
+                    $modelParent = $content.data('$modelParent');
+
+                    if ($prev.length > 0) {
+                        $prevParent = $prev.data('$modelParent');
+                    }
+
+                    if (!$prevParent) {
+                        return;
+                    }
+
+                    if (parseInt($modelParent.attr('data-order')) < parseInt($prevParent.attr('data-order'))) {
+                        $content.insertBefore($prev);
+                    }
+                });
         }
 
         function analyzePageBreaks() {
