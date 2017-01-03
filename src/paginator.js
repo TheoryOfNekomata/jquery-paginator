@@ -120,7 +120,10 @@
             pageBlockClass = 'page-block',
             pageAddedClass = 'page-added',
             pageDeletedClass = 'page-deleted',
-            $modelParents = [];
+            $modelParents = [],
+            debounce = 500,
+            debounceTimer = null,
+            isEventTriggered = false;
 
         function toClassSelector(classString) {
             return '.' + classString.split(' ').filter(function (string) { return string.trim().length > 0 }).join('.');
@@ -136,8 +139,6 @@
                     if ($content.parents(toClassSelector(pageDeletedClass)).length > 0) {
                         return;
                     }
-
-                    console.log($modelParent);
 
                     $modelParent.attr('data-order', 0);
                     $content
@@ -315,27 +316,38 @@
                     throw new Error('Page dimensions should be explicitly set up! Either you have not included the default style or pages\' dimensions have been set to auto.');
                 }
             }
+
             showAllPages();
             layoutContent();
-            orderContent();
-            analyzePageBreaks();
-            hideBlankPages();
+
             setTimeout(function () {
-                $paginator.data('_isRendering', false);
+                orderContent();
+                analyzePageBreaks();
+                hideBlankPages();
+                setTimeout(function () {
+                    $paginator.data('_isRendering', false);
+                    $paginator.trigger('paginator.modelchangeend', {});
+                });
             });
         }
 
         function onWatchChange() {
+            //if (!isEventTriggered) {
+                $paginator.trigger('paginator.modelchangestart', {});
+                //isEventTriggered = true;
+            //}
+
             if (!!$paginator.data('_isRendering')) {
                 return;
             }
 
-            setTimeout(function () {
+            if (!!debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
+
+            debounceTimer = setTimeout(function () {
                 doRender();
-                setTimeout(function () {
-                    $paginator.trigger('paginator.modelchange', {});
-                });
-            });
+            }, debounce);
         }
 
         $modelWatch

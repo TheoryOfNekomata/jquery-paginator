@@ -5,7 +5,7 @@
 
     $paginationEl.paginate();
 
-    $paginationEl.on('paginator.modelchange', function (e) {
+    $paginationEl.on('paginator.modelchangeend', function (e) {
         console.log(e);
     });
 })();
