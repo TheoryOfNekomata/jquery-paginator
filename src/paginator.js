@@ -331,8 +331,6 @@
         }
 
         function onWatchChange(changes) {
-            console.log(changes);
-
             //if (!isEventTriggered) {
                 $paginator.trigger('paginator.modelchangestart', {});
                 //isEventTriggered = true;
