@@ -200,7 +200,7 @@
                     if (!$prevParent) {
                         return;
                     }
-
+                    
                     if (parseInt($modelParent.attr('data-order')) < parseInt($prevParent.attr('data-order'))) {
                         $content.insertBefore($prev);
                     }
@@ -319,16 +319,13 @@
 
             showAllPages();
             layoutContent();
+            orderContent();
+            analyzePageBreaks();
+            hideBlankPages();
+            orderContent();
 
-            setTimeout(function () {
-                orderContent();
-                analyzePageBreaks();
-                hideBlankPages();
-                setTimeout(function () {
-                    $paginator.data('_isRendering', false);
-                    $paginator.trigger('paginator.modelchangeend', {});
-                });
-            });
+            $paginator.data('_isRendering', false);
+            $paginator.trigger('paginator.modelchangeend', {});
         }
 
         function onWatchChange() {
