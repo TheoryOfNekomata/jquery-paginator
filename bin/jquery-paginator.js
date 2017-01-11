@@ -114,6 +114,10 @@
             $model = $('<div>'),
             $modelWatch = $('<div>'),
             $view = $('<div>'),
+            $headerModel = $('<div>'),
+            $headerModelWatch = $('<div>'),
+            $footerModel = $('<div>'),
+            $footerModelWatch = $('<div>'),
             modelObserver = new MutationObserver(onWatchChange),
             lastPageNumber = 0,
             $pages = [],
@@ -365,13 +369,29 @@
             .addClass('model')
             .append($modelWatch);
 
+        $headerModelWatch
+            .addClass('watch');
+
+        $footerModelWatch
+            .addClass('watch');
+
         $view
             .addClass('view')
             .append($pages[0]);
 
+        $headerModel
+            .addClass('headermodel')
+            .append($headerModelWatch);
+
+        $footerModel
+            .addClass('footermodel')
+            .append($footerModelWatch);
+
         $paginator
             .addClass('paginator-component')
             .append($model)
+            .append($headerModel)
+            .append($footerModel)
             .append($view);
 
         setTimeout(function () {
