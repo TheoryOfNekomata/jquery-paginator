@@ -13,8 +13,18 @@
   overflow: hidden; /* You can't have run-off content outside the pages :P */
 }
 
+.paginator-component .page > .content::after {
+  content: ' ';
+  clear: both;
+  display: table;
+}
+
 .paginator-component .page > .footer.terminal {
 
+}
+
+.paginator-unpaginated {
+  display: none;
 }
 
 @media only screen {
