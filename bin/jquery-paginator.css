@@ -23,6 +23,10 @@
 
 }
 
+.paginator-unpaginated {
+  display: none;
+}
+
 @media only screen {
   .paginator-component .page > .padding {
     position: absolute;
