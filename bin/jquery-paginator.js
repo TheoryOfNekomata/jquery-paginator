@@ -13,7 +13,9 @@
         footerClass = 'footer',
         marginClass = 'margin',
         parentDataAttrName = 'parent',
-        terminalClass = '-terminal';
+        terminalClass = '-terminal',
+        blockParentClass = 'block-parent',
+        orderDataAttrName = 'data-order';
 
     /**
      * Converts a class string to a CSS selector.
@@ -183,62 +185,52 @@
         var self = this,
             model,
             view,
-            firstPage = new PaginatorPage(opts);
-
-        function writeHeader(page, i) {
-            var $header,
-                hasTerminal = model.hasTerminalBlockContainer(headerClass),
-                headerIndex = model.getIndexForPage(headerClass, i);
-
-            page.header.clear();
-
-            model
-                .getBlocks(headerClass)(headerIndex)
-                .each(function () {
-                    var $block = $(this),
-                        $blockParent;
-
-                    $header = $block.clone(true, true);
-
-                    if ($block.parents(toClassSelector(pageDeletedClass)).length > 0) {
-                        return;
-                    }
-
-                    $blockParent = $block.parent();
-
-                    $blockParent
-                        .addClass('block-parent')
-                        .attr('data-order', 0);
-
-                    $header
-                        .data(parentDataAttrName, $blockParent)
-                        .removeClass(pageBlockClass)
-                        .addClass(pageAddedClass);
-
-                    page.header.append($header);
-                });
-
-            page.content.$margin.css('margin-top', page.$el.find(toClassSelector(headerClass)).height());
-        }
+            firstPage = new PaginatorPage(opts),
+            isRendering = false;
 
         /**
          * Writes the appropriate headers and the footers of the page.
          */
         function writePageComponents() {
             view.pages.forEach(function (page, i) {
-                writeHeader(page, i);
+                writeToBlockContainer(headerClass, page, i);
+                writeToBlockContainer(footerClass, page, i);
             });
         }
 
         /**
          * Writes the content of the page.
          */
-        function writeContent() {
-            model
-                .getBlocks('content')
+        function writeToBlockContainer(klass, page, i) {
+            var blockContainerIndex = model.getIndexForPage(klass, i),
+                blocks,
+                isClone = false;
+
+            switch (klass) {
+                case footerClass:
+                    page.footer.clear();
+                    blocks = model.getBlocks(klass)(blockContainerIndex);
+                    isClone = true;
+                    break;
+                case headerClass:
+                    page.header.clear();
+                    blocks = model.getBlocks(klass)(blockContainerIndex);
+                    isClone = true;
+                    break;
+                default:
+                    blocks = model.getBlocks(klass);
+                    break;
+            }
+
+            blocks
                 .each(function () {
                     var $block = $(this),
-                        $blockParent;
+                        $blockParent,
+                        $renderedBlock = $block;
+
+                    if (isClone) {
+                        $renderedBlock = $block.clone(true, true);
+                    }
 
                     if ($block.parents(toClassSelector(pageDeletedClass)).length > 0) {
                         return;
@@ -247,16 +239,38 @@
                     $blockParent = $block.parent();
 
                     $blockParent
-                        .addClass('block-parent')
-                        .attr('data-order', 0);
+                        .addClass(blockParentClass)
+                        .attr(orderDataAttrName, 0);
 
-                    $block
+                    $renderedBlock
                         .data(parentDataAttrName, $blockParent)
                         .removeClass(pageBlockClass)
                         .addClass(pageAddedClass);
 
-                    firstPage.content.append($block);
+                    switch (klass) {
+                        case headerClass:
+                            page.header.append($renderedBlock);
+                            return;
+                        case footerClass:
+                            page.footer.append($renderedBlock);
+                            return;
+                        default:
+                            break;
+                    }
+
+                    firstPage.content.append($renderedBlock);
                 });
+
+            switch (klass) {
+                case headerClass:
+                    page.content.$margin.css('margin-top', page.$el.find(toClassSelector(klass)).height());
+                    break;
+                case footerClass:
+                    page.content.$margin.css('margin-bottom', page.$el.find(toClassSelector(klass)).height());
+                    break;
+                default:
+                    break;
+            }
         }
 
         /**
@@ -266,7 +280,7 @@
             model
                 .getBlocks('content')
                 .each(function (i) {
-                    $(this).attr('data-order', i);
+                    $(this).attr(orderDataAttrName, i);
                 });
         }
 
@@ -332,6 +346,8 @@
                 };
             });
 
+            console.log(pageToBreak);
+
             return pageToBreak;
         }
 
@@ -341,6 +357,8 @@
          */
         function performPageBreaks() {
             var pageToBreak = getFirstPageWithBreak();
+
+            console.log(pageToBreak);
 
             if (pageToBreak === null) {
                 return false;
@@ -365,13 +383,21 @@
          * Renders the content.
          */
         function renderContent() {
+            if (isRendering) {
+                return;
+            }
+
+            isRendering = true;
             checkDeletedBlocks();
-            writeContent();
+            writeToBlockContainer(contentClass);
             setOrder();
             performAllPageBreaks();
             writePageComponents();
-            //performAllPageBreaks();
-            //writePageComponents();
+            // TODO perform page breaks when header and footer is displayed
+
+            setTimeout(function () {
+                isRendering = false;
+            });
         }
 
         self.render = function render() {
@@ -484,7 +510,7 @@
         };
 
         self.getOrderedBlocks = function getOrderedBlocks(klass) {
-            return getBlockContainers(klass).find('[data-order]');
+            return getBlockContainers(klass).find('[' + orderDataAttrName + ']');
         };
 
         self.mountTo = function mountTo(parent) {

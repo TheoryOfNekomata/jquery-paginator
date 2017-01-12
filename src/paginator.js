@@ -13,7 +13,9 @@
         footerClass = 'footer',
         marginClass = 'margin',
         parentDataAttrName = 'parent',
-        terminalClass = '-terminal';
+        terminalClass = '-terminal',
+        blockParentClass = 'block-parent',
+        orderDataAttrName = 'data-order';
 
     /**
      * Converts a class string to a CSS selector.
@@ -61,6 +63,9 @@
             self.$margin.append($el);
         };
 
+        /**
+         *
+         */
         self.clear = function clear() {
             self.$margin.html('');
         };
@@ -183,62 +188,54 @@
         var self = this,
             model,
             view,
-            firstPage = new PaginatorPage(opts);
-
-        function writeHeader(page, i) {
-            var $header,
-                hasTerminal = model.hasTerminalBlockContainer(headerClass),
-                headerIndex = model.getIndexForPage(headerClass, i);
-
-            page.header.clear();
-
-            model
-                .getBlocks(headerClass)(headerIndex)
-                .each(function () {
-                    var $block = $(this),
-                        $blockParent;
-
-                    $header = $block.clone(true, true);
-
-                    if ($block.parents(toClassSelector(pageDeletedClass)).length > 0) {
-                        return;
-                    }
-
-                    $blockParent = $block.parent();
-
-                    $blockParent
-                        .addClass('block-parent')
-                        .attr('data-order', 0);
-
-                    $header
-                        .data(parentDataAttrName, $blockParent)
-                        .removeClass(pageBlockClass)
-                        .addClass(pageAddedClass);
-
-                    page.header.append($header);
-                });
-
-            page.content.$margin.css('margin-top', page.$el.find(toClassSelector(headerClass)).height());
-        }
+            firstPage = new PaginatorPage(opts),
+            isRendering = false;
 
         /**
          * Writes the appropriate headers and the footers of the page.
          */
         function writePageComponents() {
             view.pages.forEach(function (page, i) {
-                writeHeader(page, i);
+                writeToBlockContainer(headerClass, page, i);
+                writeToBlockContainer(footerClass, page, i);
             });
         }
 
         /**
          * Writes the content of the page.
          */
-        function writeContent() {
-            model
-                .getBlocks('content')
+        function writeToBlockContainer(klass, page, i) {
+            var blockContainerIndex = model.getIndexForPage(klass, i),
+                blocks,
+                isClone = false;
+
+            // TODO refactor this part of the code.
+
+            switch (klass) {
+                case footerClass:
+                    page.footer.clear();
+                    blocks = model.getBlocks(klass)(blockContainerIndex);
+                    isClone = true;
+                    break;
+                case headerClass:
+                    page.header.clear();
+                    blocks = model.getBlocks(klass)(blockContainerIndex);
+                    isClone = true;
+                    break;
+                default:
+                    blocks = model.getBlocks(klass);
+                    break;
+            }
+
+            blocks
                 .each(function () {
                     var $block = $(this),
-                        $blockParent;
+                        $blockParent,
+                        $renderedBlock = $block;
+
+                    if (isClone) {
+                        $renderedBlock = $block.clone(true, true);
+                    }
 
                     if ($block.parents(toClassSelector(pageDeletedClass)).length > 0) {
                         return;
@@ -247,16 +244,38 @@
                     $blockParent = $block.parent();
 
                     $blockParent
-                        .addClass('block-parent')
-                        .attr('data-order', 0);
+                        .addClass(blockParentClass)
+                        .attr(orderDataAttrName, 0);
 
-                    $block
+                    $renderedBlock
                         .data(parentDataAttrName, $blockParent)
                         .removeClass(pageBlockClass)
                         .addClass(pageAddedClass);
 
-                    firstPage.content.append($block);
+                    switch (klass) {
+                        case headerClass:
+                            page.header.append($renderedBlock);
+                            return;
+                        case footerClass:
+                            page.footer.append($renderedBlock);
+                            return;
+                        default:
+                            break;
+                    }
+
+                    firstPage.content.append($renderedBlock);
                 });
+
+            switch (klass) {
+                case headerClass:
+                    page.content.$margin.css('margin-top', page.$el.find(toClassSelector(klass)).height());
+                    break;
+                case footerClass:
+                    page.content.$margin.css('margin-bottom', page.$el.find(toClassSelector(klass)).height());
+                    break;
+                default:
+                    break;
+            }
         }
 
         /**
@@ -266,7 +285,7 @@
             model
                 .getBlocks('content')
                 .each(function (i) {
-                    $(this).attr('data-order', i);
+                    $(this).attr(orderDataAttrName, i);
                 });
         }
 
@@ -332,6 +351,8 @@
                 };
             });
 
+            console.log(pageToBreak);
+
             return pageToBreak;
         }
 
@@ -341,6 +362,8 @@
          */
         function performPageBreaks() {
             var pageToBreak = getFirstPageWithBreak();
+
+            console.log(pageToBreak);
 
             if (pageToBreak === null) {
                 return false;
@@ -365,15 +388,26 @@
          * Renders the content.
          */
         function renderContent() {
+            if (isRendering) {
+                return;
+            }
+
+            isRendering = true;
             checkDeletedBlocks();
-            writeContent();
+            writeToBlockContainer(contentClass);
             setOrder();
             performAllPageBreaks();
             writePageComponents();
-            //performAllPageBreaks();
-            //writePageComponents();
+            // TODO perform page breaks when header and footer is displayed
+
+            setTimeout(function () {
+                isRendering = false;
+            });
         }
 
+        /**
+         *
+         */
         self.render = function render() {
             if (view.pages.length < 1) {
                 view.addPage(firstPage);
@@ -382,6 +416,10 @@
             renderContent();
         };
 
+        /**
+         *
+         * @param parent
+         */
         self.mountTo = function mountTo(parent) {
             model = parent.model;
             view = parent.view;
@@ -399,6 +437,9 @@
         var self = this,
             paginator;
 
+        /**
+         *
+         */
         function createElement() {
             self.$el = self.$el || $('<div>').addClass(modelClass);
             if (!!self.$watch) {
@@ -408,14 +449,31 @@
             self.$el.append(self.$watch);
         }
 
+        /**
+         *
+         * @param klass
+         * @param isTerminal
+         * @returns {*}
+         */
         function getBlockContainers(klass, isTerminal) {
             return self.$watch.children(toClassSelector(!!isTerminal ? klass + ' ' + terminalClass : klass));
         }
 
+        /**
+         *
+         * @param klass
+         * @returns {*}
+         */
         function getCount(klass) {
             return getBlockContainers(klass).length;
         }
 
+        /**
+         *
+         * @param klass
+         * @param pageNumber
+         * @returns {number|*}
+         */
         function getIndexForTerminalBlockContainer(klass, pageNumber) {
             var $currBlockContainer = getBlockContainers(klass).eq(0),
                 i, j, hasHeaderTerminalClass, hasFooterTerminalClass;
@@ -450,10 +508,21 @@
             }
         }
 
+        /**
+         *
+         * @param klass
+         * @returns {boolean}
+         */
         self.hasTerminalBlockContainer = function hasTerminalBlockContainer(klass) {
             return getBlockContainers(klass, true).length > 0;
         };
 
+        /**
+         *
+         * @param klass
+         * @param pageNumber
+         * @returns {*}
+         */
         self.getIndexForPage = function getIndexForPage(klass, pageNumber) {
             if (!self.hasTerminalBlockContainer(klass)) {
                 return pageNumber % getCount(klass);
@@ -462,6 +531,11 @@
             return getIndexForTerminalBlockContainer(klass, pageNumber);
         };
 
+        /**
+         *
+         * @param klass
+         * @returns {*}
+         */
         self.getBlocks = function getBlocks(klass) {
             switch (klass) {
                 case headerClass:
@@ -483,10 +557,19 @@
             return getBlockContainers(klass).find(toClassSelector(pageBlockClass));
         };
 
+        /**
+         *
+         * @param klass
+         * @returns {*|{}}
+         */
         self.getOrderedBlocks = function getOrderedBlocks(klass) {
-            return getBlockContainers(klass).find('[data-order]');
+            return getBlockContainers(klass).find('[' + orderDataAttrName + ']');
         };
 
+        /**
+         *
+         * @param parent
+         */
         self.mountTo = function mountTo(parent) {
             if (paginator === parent) {
                 return;
@@ -508,12 +591,24 @@
         var self = this,
             paginator;
 
+        /**
+         *
+         * @type {Array}
+         */
         self.pages = self.pages || [];
 
+        /**
+         *
+         */
         function createElement() {
             self.$el = self.$el || $('<div>').addClass(viewClass);
         }
 
+        /**
+         *
+         * @param page
+         * @param i
+         */
         function addToPageList(page, i) {
             if (isNaN(i) || i === null) {
                 self.pages.push(page);
@@ -523,10 +618,19 @@
             self.pages.splice(i, 0, page);
         }
 
+        /**
+         *
+         * @returns {Number}
+         */
         self.getPageCount = function getPageCount() {
             return self.pages.length;
         };
 
+        /**
+         *
+         * @param klass
+         * @returns {XMLList}
+         */
         self.getBlocks = function getBlocks(klass) {
             return self.$el
                 .find(toClassSelector(klass))
@@ -534,12 +638,22 @@
                 .children();
         };
 
+        /**
+         *
+         * @param page
+         * @param i
+         * @returns {*}
+         */
         self.addPage = function addPage(page, i) {
             addToPageList(page, i);
             page.mountTo(self);
             return page;
         };
 
+        /**
+         *
+         * @param parent
+         */
         self.mountTo = function mountTo(parent) {
             paginator = parent;
             paginator.$el.append(self.$el);
@@ -559,15 +673,38 @@
             pub;
 
         opts = new PaginatorOptions(opts);
-        self.model = new PaginatorModel(opts);
-        self.view = new PaginatorView(opts);
-        self.renderer = new PaginatorRenderer(opts);
+
         modelObserver = new MutationObserver(render);
 
+        /**
+         *
+         * @type {PaginatorModel}
+         */
+        self.model = new PaginatorModel(opts);
+
+        /**
+         *
+         * @type {PaginatorView}
+         */
+        self.view = new PaginatorView(opts);
+
+        /**
+         *
+         * @type {PaginatorRenderer}
+         */
+        self.renderer = new PaginatorRenderer(opts);
+
+        /**
+         *
+         */
         function render() {
             self.renderer.render();
         }
 
+        /**
+         *
+         * @param $el
+         */
         function bindToElement($el) {
             if (!!self.$el) {
                 self.$el.removeClass(componentClass);
@@ -581,6 +718,9 @@
                 .removeClass(unpaginatedClass);
         }
 
+        /**
+         *
+         */
         function createModel() {
             self.model.mountTo(self);
 
@@ -600,14 +740,23 @@
             );
         }
 
+        /**
+         *
+         */
         function createView() {
             self.view.mountTo(self);
         }
 
+        /**
+         *
+         */
         function createRenderer() {
             self.renderer.mountTo(self);
         }
 
+        /**
+         *
+         */
         function observeModel() {
             modelObserver
                 .observe(self.model.$watch[0], {
@@ -624,6 +773,10 @@
             }
         };
 
+        /**
+         *
+         * @param $el
+         */
         self.bindTo = function bindTo($el) {
             bindToElement($el);
             createModel();
