@@ -422,6 +422,7 @@
             isRendering = true;
             checkDeletedBlocks();
             removeBlankPages();
+            // TODO move elements when extra space has been found on previous pages.
             writeToBlockContainer(contentClass);
             setOrder();
             do {
