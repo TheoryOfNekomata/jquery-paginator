@@ -19,10 +19,6 @@
   display: table;
 }
 
-.paginator-component .page > .footer.terminal {
-
-}
-
 .paginator-unpaginated {
   display: none;
 }

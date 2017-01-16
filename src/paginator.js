@@ -101,7 +101,7 @@
      */
     function PaginatorPage(opts) {
         var self = this,
-            view;
+            paginator;
 
         self.header = new PaginatorPageContent(headerClass, opts);
         self.content = new PaginatorPageContent(contentClass, opts);
@@ -132,6 +132,20 @@
             return self.$el.height() - topHeight - bottomHeight;
         }
 
+        function getPageIndex() {
+            var pageIndex = -1;
+
+            paginator.pages.forEach(function (page, i) {
+                if (page !== self) {
+                    return;
+                }
+
+                pageIndex = i;
+            });
+
+            return pageIndex;
+        }
+
         /**
          * Gets the lower boundary of the page.
          * @returns {number} The lower boundary of the page.
@@ -146,6 +160,10 @@
          */
         self.hasBreaks = function hasBreaks() {
             return self.getOverflowBlocks().length > 0;
+        };
+
+        self.isBlank = function isBlank() {
+            return self.content.$margin.children().length < 1;
         };
 
         /**
@@ -163,17 +181,21 @@
                 });
         };
 
+        self.unmount = function unmount() {
+            self.$el.remove();
+        };
+
         /**
          * Mounts the component to a parent.
          * @param {object} parent The component
          */
         self.mountTo = function mountTo(parent) {
-            if (view === parent) {
+            if (paginator === parent) {
                 return;
             }
 
-            view = parent;
-            view.$el.append(self.$el);
+            paginator = parent;
+            paginator.view.$el.append(self.$el);
         };
 
         createElement();
@@ -188,6 +210,7 @@
         var self = this,
             model,
             view,
+            paginator,
             firstPage = new PaginatorPage(opts),
             isRendering = false;
 
@@ -195,7 +218,7 @@
          * Writes the appropriate headers and the footers of the page.
          */
         function writePageComponents() {
-            view.pages.forEach(function (page, i) {
+            paginator.pages.forEach(function (page, i) {
                 writeToBlockContainer(headerClass, page, i);
                 writeToBlockContainer(footerClass, page, i);
             });
@@ -325,7 +348,7 @@
                 newPage.content.append($(this));
             });
 
-            view.pages.slice(content.pageIndex + 1).forEach(function (page) {
+            paginator.pages.slice(content.pageIndex + 1).forEach(function (page) {
                 newPage.content.append(page.content.getBlocks());
             });
 
@@ -339,7 +362,7 @@
         function getFirstPageWithBreak() {
             var pageToBreak = null;
 
-            view.pages.forEach(function (page, i) {
+            paginator.pages.forEach(function (page, i) {
                 if (!page.hasBreaks() || pageToBreak !== null) {
                     return;
                 }
@@ -351,8 +374,6 @@
                 };
             });
 
-            console.log(pageToBreak);
-
             return pageToBreak;
         }
 
@@ -363,8 +384,6 @@
         function performPageBreaks() {
             var pageToBreak = getFirstPageWithBreak();
 
-            console.log(pageToBreak);
-
             if (pageToBreak === null) {
                 return false;
             }
@@ -373,32 +392,42 @@
             return true;
         }
 
-        /**
-         * Performs all page breaks when the renderer detects at least one page that has a page break.
-         */
-        function performAllPageBreaks() {
-            var hasPerformedPageBreaks;
+        function removeBlankPages() {
+            var pagesToDelete = [];
 
-            do {
-                hasPerformedPageBreaks = performPageBreaks();
-            } while (hasPerformedPageBreaks);
+            paginator.pages.forEach(function (page, i) {
+                if (!page.isBlank()) {
+                    return;
+                }
+                pagesToDelete.push(i);
+            });
+
+            pagesToDelete
+                .reverse()
+                .forEach(function (pageNumber) {
+                    paginator.pages[pageNumber].unmount();
+                    paginator.pages.splice(pageNumber, 1);
+                });
         }
 
         /**
          * Renders the content.
          */
         function renderContent() {
+            var hasPerformedPageBreaks;
             if (isRendering) {
                 return;
             }
 
             isRendering = true;
             checkDeletedBlocks();
+            removeBlankPages();
             writeToBlockContainer(contentClass);
             setOrder();
-            performAllPageBreaks();
-            writePageComponents();
-            // TODO perform page breaks when header and footer is displayed
+            do {
+                hasPerformedPageBreaks = performPageBreaks();
+                writePageComponents();
+            } while (hasPerformedPageBreaks);
 
             setTimeout(function () {
                 isRendering = false;
@@ -409,7 +438,7 @@
          *
          */
         self.render = function render() {
-            if (view.pages.length < 1) {
+            if (paginator.pages.length < 1) {
                 view.addPage(firstPage);
             }
 
@@ -421,8 +450,9 @@
          * @param parent
          */
         self.mountTo = function mountTo(parent) {
-            model = parent.model;
-            view = parent.view;
+            paginator = parent;
+            model = paginator.model;
+            view = paginator.view;
 
             self.render();
         };
@@ -482,7 +512,7 @@
                 i = 0,
                 j = 0;
 
-                i < paginator.view.pages.length;
+                i < paginator.pages.length;
 
                 i++,
                 j = (j + 1) % getCount(headerClass),
@@ -588,14 +618,9 @@
      * @constructor
      */
     function PaginatorView(opts) {
-        var self = this,
-            paginator;
+        var self = this;
 
-        /**
-         *
-         * @type {Array}
-         */
-        self.pages = self.pages || [];
+        self.paginator = null;
 
         /**
          *
@@ -611,11 +636,11 @@
          */
         function addToPageList(page, i) {
             if (isNaN(i) || i === null) {
-                self.pages.push(page);
+                self.paginator.pages.push(page);
                 return;
             }
 
-            self.pages.splice(i, 0, page);
+            self.paginator.pages.splice(i, 0, page);
         }
 
         /**
@@ -623,7 +648,7 @@
          * @returns {Number}
          */
         self.getPageCount = function getPageCount() {
-            return self.pages.length;
+            return self.paginator.pages.length;
         };
 
         /**
@@ -646,7 +671,7 @@
          */
         self.addPage = function addPage(page, i) {
             addToPageList(page, i);
-            page.mountTo(self);
+            page.mountTo(self.paginator);
             return page;
         };
 
@@ -655,8 +680,8 @@
          * @param parent
          */
         self.mountTo = function mountTo(parent) {
-            paginator = parent;
-            paginator.$el.append(self.$el);
+            self.paginator = parent;
+            self.paginator.$el.append(self.$el);
         };
 
         createElement();
@@ -693,6 +718,12 @@
          * @type {PaginatorRenderer}
          */
         self.renderer = new PaginatorRenderer(opts);
+
+        /**
+         *
+         * @type {Array}
+         */
+        self.pages = self.pages || [];
 
         /**
          *
