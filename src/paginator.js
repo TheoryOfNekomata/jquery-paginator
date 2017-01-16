@@ -17,15 +17,30 @@
         blockParentClass = 'block-parent',
         orderDataAttrName = 'data-order';
 
+    // http://stackoverflow.com/questions/7051897/how-can-i-select-the-shallowest-matching-descendant
+    jQuery.fn.findShallow = function(sel) {
+        return (function findShallow(root, sel) {
+            var children = root.children();
+            if (children.length) {
+                var matching = children.filter(sel);
+                if (matching.length) {
+                    return matching.first();
+                }
+                return findShallow(children, sel);
+            }
+            return $();
+        })(this, sel);
+    };
+
     // http://james.padolsey.com/snippets/sorting-elements-with-jquery/
-    jQuery.fn.sortElements = (function(){
+    jQuery.fn.sortElements = (function () {
         var sort = [].sort;
 
-        return function(comparator, getSortable) {
+        return function (comparator, getSortable) {
 
-            getSortable = getSortable || function(){return this;};
+            getSortable = getSortable || function () { return this; };
 
-            var placements = this.map(function(){
+            var placements = this.map(function () {
 
                 var sortElement = getSortable.call(this),
                     parentNode = sortElement.parentNode,
@@ -38,7 +53,7 @@
                         sortElement.nextSibling
                     );
 
-                return function() {
+                return function () {
 
                     if (parentNode === this) {
                         throw new Error(
@@ -55,7 +70,7 @@
 
             });
 
-            return sort.call(this, comparator).each(function(i){
+            return sort.call(this, comparator).each(function (i) {
                 placements[i].call(getSortable.call(this));
             });
 
@@ -259,7 +274,6 @@
             paginator,
             firstPage = new PaginatorPage(opts),
             isRendering = false;
-            isRendering = false;
 
         /**
          * Writes the appropriate headers and the footers of the page.
@@ -381,7 +395,8 @@
 
                     isParentDeleted = !$blockParent ||
                             $blockParent.hasClass(pageDeletedClass) ||
-                            $blockParent.parents(toClassSelector(pageDeletedClass)).length > 0;
+                            $blockParent.parents(toClassSelector(pageDeletedClass)).length > 0 ||
+                            !$blockParent.parents().is('body');
 
                     if (!isParentDeleted) {
                         return;
@@ -459,31 +474,12 @@
             pagesToDelete
                 .reverse()
                 .forEach(function (pageNumber) {
+                    if (paginator.pages.length < 2) {
+                        return;
+                    }
                     paginator.pages[pageNumber].unmount();
                     paginator.pages.splice(pageNumber, 1);
                 });
-        }
-
-        function isContentInOrder() {
-            var isInOrder = true;
-
-            view
-                .$el
-                .find('.content')
-                .find('.margin')
-                .children()
-                .each(function () {
-                    var $block = $(this),
-                        $prev = $block.prev();
-
-                    if ($prev.length < 1) {
-                        return;
-                    }
-
-                    isInOrder = isInOrder && $block.attr(orderDataAttrName) > $prev.attr(orderDataAttrName);
-                });
-
-            return isInOrder;
         }
 
         function orderContent() {
@@ -505,7 +501,6 @@
          */
         self.render = function render() {
             paginator.detachObserver();
-
             if (paginator.pages.length < 1) {
                 view.addPage(firstPage);
             }
@@ -523,6 +518,9 @@
             writePageComponents();
             orderContent();
 
+            setTimeout(function () {
+                isRendering = false;
+            });
             paginator.observeModel();
         };
 
@@ -534,8 +532,6 @@
             paginator = parent;
             model = paginator.model;
             view = paginator.view;
-
-            self.render();
         };
     }
 
@@ -567,7 +563,7 @@
          * @returns {*}
          */
         function getBlockContainers(klass, isTerminal) {
-            return self.$watch.children(toClassSelector(!!isTerminal ? klass + ' ' + terminalClass : klass));
+            return self.$watch.find(toClassSelector(!!isTerminal ? klass + ' ' + terminalClass : klass));
         }
 
         /**
@@ -775,12 +771,11 @@
      */
     function Paginator(opts) {
         var self = this,
-            modelObserver,
-            pub;
+            modelObserver = new MutationObserver(commitMutations),
+            pub,
+            isObserving = false;
 
         opts = new PaginatorOptions(opts);
-
-        modelObserver = new MutationObserver(render);
 
         /**
          *
@@ -813,6 +808,10 @@
             self.renderer.render();
         }
 
+        function commitMutations() {
+            render();
+        }
+
         /**
          *
          * @param $el
@@ -834,22 +833,15 @@
          *
          */
         function createModel() {
+            var $modelChildren;
+
             self.model.mountTo(self);
 
-            self.model.$watch.append(
-                self
-                    .$el
-                    .children()
-                    .filter(function () {
-                        var $el = $(this);
+            $modelChildren = self
+                .$el
+                .findShallow(toClassSelector(headerClass + ' ' + contentClass + ' ' + footerClass));
 
-                        return !(
-                            $el.hasClass(modelClass) ||
-                            $el.hasClass(viewClass) ||
-                            $el.hasClass(watchClass)
-                        );
-                    })
-            );
+            self.model.$watch.append($modelChildren);
         }
 
         /**
@@ -884,9 +876,16 @@
                     characterData: true,
                     subtree: true
                 });
+            isObserving = true;
         };
 
         pub = {
+            observe: function doObserve() {
+                if (!isObserving) {
+                    return;
+                }
+                self.observeModel();
+            },
             refresh: function doRender() {
                 render();
             }
@@ -901,12 +900,13 @@
             createModel();
             createView();
             createRenderer();
-            render();
+            self.observeModel();
             $el.data('paginator', pub);
+            return pub;
         };
     }
 
     $.fn.paginate = function paginate(opts) {
-        new Paginator(opts).bindTo(this);
+        return new Paginator(opts).bindTo(this);
     };
 })();
