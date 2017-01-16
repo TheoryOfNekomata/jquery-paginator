@@ -17,6 +17,52 @@
         blockParentClass = 'block-parent',
         orderDataAttrName = 'data-order';
 
+    // http://james.padolsey.com/snippets/sorting-elements-with-jquery/
+    jQuery.fn.sortElements = (function(){
+        var sort = [].sort;
+
+        return function(comparator, getSortable) {
+
+            getSortable = getSortable || function(){return this;};
+
+            var placements = this.map(function(){
+
+                var sortElement = getSortable.call(this),
+                    parentNode = sortElement.parentNode,
+
+                // Since the element itself will change position, we have
+                // to have some way of storing its original position in
+                // the DOM. The easiest way is to have a 'flag' node:
+                    nextSibling = parentNode.insertBefore(
+                        document.createTextNode(''),
+                        sortElement.nextSibling
+                    );
+
+                return function() {
+
+                    if (parentNode === this) {
+                        throw new Error(
+                            "You can't sort elements if any one is a descendant of another."
+                        );
+                    }
+
+                    // Insert before flag:
+                    parentNode.insertBefore(this, nextSibling);
+                    // Remove flag:
+                    parentNode.removeChild(nextSibling);
+
+                };
+
+            });
+
+            return sort.call(this, comparator).each(function(i){
+                placements[i].call(getSortable.call(this));
+            });
+
+        };
+
+    })();
+
     /**
      * Converts a class string to a CSS selector.
      * @param {string} classString The class string.
@@ -213,6 +259,7 @@
             paginator,
             firstPage = new PaginatorPage(opts),
             isRendering = false;
+            isRendering = false;
 
         /**
          * Writes the appropriate headers and the footers of the page.
@@ -253,7 +300,6 @@
             blocks
                 .each(function () {
                     var $block = $(this),
-                        $blockParent,
                         $renderedBlock = $block;
 
                     if (isClone) {
@@ -305,10 +351,18 @@
          * Sets the ordering of each block rendered in the view.
          */
         function setOrder() {
-            model
-                .getBlocks('content')
+            model.$el
+                .find(toClassSelector(blockParentClass))
                 .each(function (i) {
                     $(this).attr(orderDataAttrName, i);
+                });
+
+            view.getBlocks('content')
+                .each(function () {
+                    var $block = $(this),
+                        $blockParent = $block.data(parentDataAttrName);
+
+                    $block.attr(orderDataAttrName, $blockParent.attr(orderDataAttrName));
                 });
         }
 
@@ -410,6 +464,42 @@
                 });
         }
 
+        function isContentInOrder() {
+            var isInOrder = true;
+
+            view
+                .$el
+                .find('.content')
+                .find('.margin')
+                .children()
+                .each(function () {
+                    var $block = $(this),
+                        $prev = $block.prev();
+
+                    if ($prev.length < 1) {
+                        return;
+                    }
+
+                    isInOrder = isInOrder && $block.attr(orderDataAttrName) > $prev.attr(orderDataAttrName);
+                });
+
+            return isInOrder;
+        }
+
+        function orderContent() {
+            view
+                .$el
+                .find('.content')
+                .find('.margin')
+                .children()
+                .sortElements(function (block1, block2) {
+                    var order1 = parseInt($(block1).attr(orderDataAttrName)),
+                        order2 = parseInt($(block2).attr(orderDataAttrName));
+
+                    return order1 - order2;
+                });
+        }
+
         /**
          * Renders the content.
          */
@@ -421,7 +511,6 @@
 
             isRendering = true;
             checkDeletedBlocks();
-            removeBlankPages();
             // TODO move elements when extra space has been found on previous pages.
             writeToBlockContainer(contentClass);
             setOrder();
@@ -429,6 +518,9 @@
                 hasPerformedPageBreaks = performPageBreaks();
                 writePageComponents();
             } while (hasPerformedPageBreaks);
+            removeBlankPages();
+            writePageComponents();
+            orderContent();
 
             setTimeout(function () {
                 isRendering = false;
