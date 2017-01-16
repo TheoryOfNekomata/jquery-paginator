@@ -503,13 +503,14 @@
         /**
          * Renders the content.
          */
-        function renderContent() {
-            var hasPerformedPageBreaks;
-            if (isRendering) {
-                return;
+        self.render = function render() {
+            paginator.detachObserver();
+
+            if (paginator.pages.length < 1) {
+                view.addPage(firstPage);
             }
 
-            isRendering = true;
+            var hasPerformedPageBreaks;
             checkDeletedBlocks();
             // TODO move elements when extra space has been found on previous pages.
             writeToBlockContainer(contentClass);
@@ -522,20 +523,7 @@
             writePageComponents();
             orderContent();
 
-            setTimeout(function () {
-                isRendering = false;
-            });
-        }
-
-        /**
-         *
-         */
-        self.render = function render() {
-            if (paginator.pages.length < 1) {
-                view.addPage(firstPage);
-            }
-
-            renderContent();
+            paginator.observeModel();
         };
 
         /**
@@ -881,7 +869,14 @@
         /**
          *
          */
-        function observeModel() {
+        self.detachObserver = function detachObserver() {
+            modelObserver.disconnect();
+        };
+
+        /**
+         *
+         */
+        self.observeModel = function observeModel() {
             modelObserver
                 .observe(self.model.$watch[0], {
                     childList: true,
@@ -889,7 +884,7 @@
                     characterData: true,
                     subtree: true
                 });
-        }
+        };
 
         pub = {
             refresh: function doRender() {
@@ -906,7 +901,7 @@
             createModel();
             createView();
             createRenderer();
-            observeModel();
+            render();
             $el.data('paginator', pub);
         };
     }
