@@ -3,7 +3,7 @@
 
     $paginationEl = $('#pagination');
 
-    $paginationEl.paginate();
+    $paginationEl.paginate().refresh();
 
     $paginationEl.on('paginator.modelchangeend', function (e) {
         console.log(e);

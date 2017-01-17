@@ -184,8 +184,8 @@
          * @returns {number} The content height of the page.
          */
         function getContentHeight() {
-            var $header = self.$el.find(toClassSelector(headerClass)),
-                $footer = self.$el.find(toClassSelector(footerClass)),
+            var $header = self.header.$el,
+                $footer = self.footer.$el,
                 $margin = self.content.$margin,
                 topHeight = Math.max($header.length > 0 ? $header.height() : 0, parseInt($margin.css('margin-top'))),
                 bottomHeight = Math.max($footer.length > 0 ? $footer.height() : 0, parseInt($margin.css('margin-bottom')));
@@ -212,7 +212,10 @@
          * @returns {number} The lower boundary of the page.
          */
         function getContentLowerBoundary() {
-            return parseInt(self.content.$el.css('margin-top')) + getContentHeight();
+            var $header = self.header.$el,
+                $margin = self.content.$margin,
+                topHeight = Math.max($header.length > 0 ? $header.height() : 0, parseInt($margin.css('margin-top')));
+            return topHeight + getContentHeight();
         }
 
         /**
@@ -294,6 +297,20 @@
                 isClone = false;
 
             // TODO refactor this part of the code.
+
+            if (blockContainerIndex < 0) {
+                switch (klass) {
+                    case headerClass:
+                        page.header.clear();
+                        return;
+                    case footerClass:
+                        page.footer.clear();
+                        return;
+                    default:
+                        break;
+                }
+                return;
+            }
 
             switch (klass) {
                 case footerClass:
@@ -515,8 +532,10 @@
                 writePageComponents();
             } while (hasPerformedPageBreaks);
             removeBlankPages();
-            writePageComponents();
-            orderContent();
+            do {
+                hasPerformedPageBreaks = performPageBreaks();
+                writePageComponents();
+            } while (hasPerformedPageBreaks);
 
             setTimeout(function () {
                 isRendering = false;
@@ -582,37 +601,46 @@
          * @returns {number|*}
          */
         function getIndexForTerminalBlockContainer(klass, pageNumber) {
-            var $currBlockContainer = getBlockContainers(klass).eq(0),
-                i, j, hasHeaderTerminalClass, hasFooterTerminalClass;
+            var i,
+                count = getCount(klass),
+                index = -1,
+                pageCount = paginator.view.getPageCount(),
+                lastIndex = pageCount - 1,
+                $blocks = getBlockContainers(klass);
 
-            for (
-                i = 0,
-                j = 0;
-
-                i < paginator.pages.length;
-
-                i++,
-                j = (j + 1) % getCount(headerClass),
-                $currBlockContainer = $currBlockContainer.next()
-            ) {
-                if (!$currBlockContainer) {
-                    $currBlockContainer = getBlockContainers(klass).eq(0);
-                }
-
-                hasHeaderTerminalClass = klass === headerClass && $currBlockContainer.hasClass(terminalClass);
-                hasFooterTerminalClass = klass === footerClass && $currBlockContainer.hasClass(terminalClass);
-
-                if (hasHeaderTerminalClass && pageNumber > 0 ||
-                    hasFooterTerminalClass && pageNumber < paginator.view.getPageCount() - 1) {
-                    ++j;
-                }
-
-                if (i === pageNumber ||
-                    hasHeaderTerminalClass && pageNumber === 0 ||
-                    hasFooterTerminalClass && pageNumber === paginator.view.getPageCount() - 1) {
-                    return j;
+            if (count === 1) {
+                switch (klass) {
+                    case headerClass:
+                        return pageNumber === 0 ? 0 : -1;
+                    case footerClass:
+                        return pageNumber === lastIndex ? 0 : -1;
+                    default:
+                        break;
                 }
             }
+
+            i = 0;
+            do {
+                index = (index + 1) % count;
+                if (pageNumber === 0 && klass === headerClass ||
+                    pageNumber === lastIndex && klass === footerClass) {
+                    $blocks.each(function (k) {
+                        if (!$(this).hasClass(terminalClass)) {
+                            return;
+                        }
+                        index = k;
+                    });
+                    return index;
+                }
+
+                if ($blocks.eq(index).hasClass(terminalClass)) {
+                    index++;
+                }
+
+                i++;
+            } while (i < pageNumber);
+
+            return index;
         }
 
         /**
@@ -839,7 +867,15 @@
 
             $modelChildren = self
                 .$el
-                .findShallow(toClassSelector(headerClass + ' ' + contentClass + ' ' + footerClass));
+                .find(
+                //.findShallow(
+                    [
+                        toClassSelector(headerClass),
+                        toClassSelector(contentClass),
+                        toClassSelector(footerClass)
+                    ]
+                        .join(',')
+                );
 
             self.model.$watch.append($modelChildren);
         }
