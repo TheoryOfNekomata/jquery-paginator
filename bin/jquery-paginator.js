@@ -524,9 +524,12 @@
 
             var hasPerformedPageBreaks;
             checkDeletedBlocks();
+            // TODO implement hard page/section breaks
+            // section breaks are what reset the header indexing, etc.
             // TODO move elements when extra space has been found on previous pages.
             writeToBlockContainer(contentClass);
             setOrder();
+            orderContent();
             do {
                 hasPerformedPageBreaks = performPageBreaks();
                 writePageComponents();
