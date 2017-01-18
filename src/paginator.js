@@ -328,6 +328,13 @@
                     break;
             }
 
+            function addBlockEventListener($block) {
+                // TODO bind event listener once
+                $block
+                    .on('change', 'input, textarea, select', function (e) {
+                    });
+            }
+
             blocks
                 .each(function () {
                     var $block = $(this),
@@ -354,9 +361,11 @@
 
                     switch (klass) {
                         case headerClass:
+                            addBlockEventListener($renderedBlock);
                             page.header.append($renderedBlock);
                             return;
                         case footerClass:
+                            addBlockEventListener($renderedBlock);
                             page.footer.append($renderedBlock);
                             return;
                         default:
@@ -523,6 +532,7 @@
             }
 
             var hasPerformedPageBreaks;
+
             checkDeletedBlocks();
             // TODO implement hard page/section breaks
             // section breaks are what reset the header indexing, etc.
@@ -541,9 +551,9 @@
             } while (hasPerformedPageBreaks);
 
             setTimeout(function () {
+                paginator.attachObserver();
                 isRendering = false;
             });
-            paginator.observeModel();
         };
 
         /**
@@ -797,14 +807,17 @@
 
     /**
      * Class for the paginator.
+     * @param {Element} $el The element.
      * @param {object} opts The options of the paginator.
      * @constructor
      */
-    function Paginator(opts) {
+    function Paginator($el, opts) {
         var self = this,
             modelObserver = new MutationObserver(commitMutations),
             pub,
-            isObserving = false;
+            areEventsAttached = false,
+            isObserving = false,
+            debounceHandle = null;
 
         opts = new PaginatorOptions(opts);
 
@@ -839,8 +852,31 @@
             self.renderer.render();
         }
 
-        function commitMutations() {
-            render();
+        function commitMutations(mutations) {
+            var isHeaderFooterElement;
+
+            console.log(mutations);
+
+            //isHeaderFooterElement = mutations.reduce(function (isElement, mutation) {
+            //    var $parents = $(mutation.target).parents();
+            //
+            //    return isElement && (
+            //            $parents.is(toClassSelector(headerClass)) ||
+            //            $parents.is(toClassSelector(footerClass))
+            //        );
+            //}, true);
+
+            //if (isHeaderFooterElement) {
+            //    return;
+            //}
+
+            if (!!debounceHandle) {
+                clearTimeout(debounceHandle);
+            }
+
+            debounceHandle = setTimeout(function () {
+                render();
+            }, 250);
         }
 
         /**
@@ -907,7 +943,7 @@
         /**
          *
          */
-        self.observeModel = function observeModel() {
+        self.attachObserver = function attachObserver() {
             modelObserver
                 .observe(self.model.$watch[0], {
                     childList: true,
@@ -915,37 +951,84 @@
                     characterData: true,
                     subtree: true
                 });
-            isObserving = true;
-        };
-
-        pub = {
-            observe: function doObserve() {
-                if (!isObserving) {
-                    return;
-                }
-                self.observeModel();
-            },
-            refresh: function doRender() {
-                render();
-            }
         };
 
         /**
          *
-         * @param $el
          */
-        self.bindTo = function bindTo($el) {
-            bindToElement($el);
-            createModel();
-            createView();
-            createRenderer();
-            self.observeModel();
-            $el.data('paginator', pub);
-            return pub;
+        self.attachEventListeners = function attachEventListeners() {
+            console.log(self.model.$watch);
+            self.model.$watch
+                .on('change', 'input, select, textarea', function (e, d) {
+                    var mutation;
+
+                    console.log('asdfasdfasdfasdfasdf');
+
+                    if (!isObserving) {
+                        return;
+                    }
+
+                    mutation = e;
+                    mutation.data = d;
+
+                    commitMutations([mutation]);
+                });
         };
+
+        /**
+         *
+         */
+        function observeModel() {
+            if (!!isObserving) {
+                return;
+            }
+            self.attachObserver();
+            isObserving = true;
+        }
+
+        /**
+         *
+         */
+        function observeModelEvents() {
+            if (!!areEventsAttached) {
+                return;
+            }
+            self.attachEventListeners();
+            areEventsAttached = true;
+        }
+
+        /**
+         *
+         */
+        function doObserve() {
+            observeModel();
+            observeModelEvents();
+        }
+
+        /**
+         *
+         */
+        function doRefresh() {
+            render();
+        }
+
+        pub = (function PaginatorInstance() {
+            return {
+                observe: doObserve,
+                refresh: doRefresh
+            };
+        })();
+
+        bindToElement($el);
+        createModel();
+        createView();
+        createRenderer();
+        doObserve();
+        $el.data('paginator', pub);
+        return pub;
     }
 
     $.fn.paginate = function paginate(opts) {
-        return new Paginator(opts).bindTo(this);
+        return new Paginator(this, opts);
     };
 })();
