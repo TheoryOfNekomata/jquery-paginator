@@ -337,7 +337,8 @@
             blocks
                 .each(function (i) {
                     var $block = $(this),
-                        $renderedBlock = $block;
+                        $renderedBlock = $block,
+                        changedElementId;
 
                     $block
                         .find(controlElsSelector)
@@ -365,18 +366,26 @@
                         .removeClass(pageBlockClass)
                         .addClass(pageAddedClass)
                         .on('change', controlElsSelector, function (e, d) {
-                            var thisElementId,
-                                $origEl;
+                            var $origEl,
+                                $this = $(this);
 
                             if (klass !== headerClass && klass !== footerClass) {
                                 return;
                             }
 
-                            thisElementId = $(this).attr(idAttrName);
+                            changedElementId = $this.attr(idAttrName);
+                            $origEl = $blockParent.find(toAttrSelector(idAttrName, changedElementId));
 
-                            $origEl = $blockParent.find(toAttrSelector(idAttrName, thisElementId));
+                            if ($this.is('select')) {
+                                $origEl
+                                    .find('option')
+                                    .removeAttr('selected')
+                                    .filter(toAttrSelector('value', $this.val()))
+                                    .attr('selected', 'selected');
+                            }
+
                             $origEl
-                                .val($(this).val())
+                                .val($this.val())
                                 .trigger(e.type, d);
                         });
 
