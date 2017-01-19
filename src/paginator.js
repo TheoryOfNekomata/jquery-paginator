@@ -350,7 +350,8 @@
                         $renderedBlock = $block.clone(true, true);
                     }
 
-                    if ($block.parents(toClassSelector(pageDeletedClass)).length > 0) {
+                    if (!$block.parents().is('body') || $block.parents(toClassSelector(pageDeletedClass)).length > 0) {
+                        $renderedBlock.off('change', controlElsSelector);
                         return;
                     }
 
