@@ -8,7 +8,7 @@
         pageBlockClass = 'page-block',
         pageAddedClass = 'page-added',
         pageDeletedClass = 'page-deleted',
-        contentClass = 'content',
+        mainClass = 'content',
         headerClass = 'header',
         footerClass = 'footer',
         marginClass = 'margin',
@@ -17,7 +17,8 @@
         blockParentClass = 'block-parent',
         orderDataAttrName = 'data-order',
         idAttrName = 'data-element-id',
-        controlElsSelector = 'input, select, textarea, button, a, meter';
+        controlElsSelector = 'input, select, textarea, button, a, meter',
+        debounceDuration = 250;
 
     // http://stackoverflow.com/questions/7051897/how-can-i-select-the-shallowest-matching-descendant
     jQuery.fn.findShallow = function(sel) {
@@ -77,9 +78,36 @@
             });
 
         };
-
     })();
 
+    /**
+     * Creates a debounced version of a function
+     * @param {function} fn The function
+     * @param {number} duration The debounce duration.
+     * @returns {function} The debounced version of the function.
+     */
+    function debounce(fn, duration) {
+        var debounceHandle = null;
+
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+
+            if (!!debounceHandle) {
+                clearTimeout(debounceHandle);
+            }
+
+            debounceHandle = setTimeout(function () {
+                fn.apply(null, args);
+            }, duration);
+        };
+    }
+
+    /**
+     * Converts a data attribute key/value pair to its corresponding CSS selector.
+     * @param key The attribute key.
+     * @param value The attribute value.
+     * @returns {string} The selector string.
+     */
     function toAttrSelector(key, value) {
         return '[' + key + '="' + value + '"]';
     }
@@ -108,7 +136,7 @@
      * @param {PaginatorOptions} opts The options of the paginator.
      * @constructor
      */
-    function PaginatorPageContent(klass, opts) {
+    function PaginatorContainer(klass, opts) {
         var self = this,
             page;
 
@@ -170,9 +198,9 @@
         var self = this,
             paginator;
 
-        self.header = new PaginatorPageContent(headerClass, opts);
-        self.content = new PaginatorPageContent(contentClass, opts);
-        self.footer = new PaginatorPageContent(footerClass, opts);
+        self.header = new PaginatorContainer(headerClass, opts);
+        self.content = new PaginatorContainer(mainClass, opts);
+        self.footer = new PaginatorContainer(footerClass, opts);
 
         /**
          * Creates the elements of the component.
@@ -306,92 +334,131 @@
         }
 
         /**
+         * Determines if the content class is repetitive.
+         * @param klass The content class.
+         * @returns {boolean} Is the content class repetitive among pages?
+         */
+        function isContentClassRepetitive(klass) {
+            return klass === headerClass || klass === footerClass;
+        }
+
+        /**
+         * Gets a page's content container of a content class.
+         * @param {PaginatorPage} page The page.
+         * @param {string} klass The content class.
+         * @returns {PaginatorContainer|null} The content container.
+         */
+        function getContentContainer(page, klass) {
+            switch (klass) {
+                case headerClass:
+                    return page.header;
+                case footerClass:
+                    return page.footer;
+                case mainClass:
+                    return firstPage.content;
+                default:
+                    break;
+            }
+
+            return null;
+        }
+
+        /**
+         * Gets the CSS key of the page to allocate space for the content class.
+         * @param klass The content class.
+         * @returns {string|null} The CSS key.
+         */
+        function getAllocationKey(klass) {
+            switch (klass) {
+                case headerClass:
+                    return 'margin-top';
+                case footerClass:
+                    return 'margin-bottom';
+                default:
+                    break;
+            }
+
+            return null;
+        }
+
+        /**
+         * Gets the allocation size of a page's content class.
+         * @param {PaginatorPage} page The page.
+         * @param {string} klass The content class.
+         * @returns {number} The margin value, in pixels.
+         */
+        function getAllocationValue(page, klass) {
+            switch (klass) {
+                case headerClass:
+                case footerClass:
+                    return getContentContainer(page, klass).$el.height();
+                default:
+                    break;
+            }
+            return 0;
+        }
+
+        /**
+         * Allocate page space for the content of the content class.
+         * @param {PaginatorPage} page The page.
+         * @param {string} klass The content class.
+         */
+        function allocateSpaceForContent(page, klass) {
+            var key = getAllocationKey(klass),
+                value;
+
+            if (!key) {
+                return;
+            }
+
+            value = getAllocationValue(klass);
+            page.content.$margin.css(key, value);
+        }
+
+        /**
+         * Labels the control elements of the block, to be used for synchronizing
+         * the data and attributes of the controls.
+         * @param {Element} $block The block.
+         * @param {number} index The index of the block.
+         */
+        function labelControlElements($block, index) {
+            $block
+                .find(controlElsSelector)
+                .each(function (j) {
+                    $(this).attr(idAttrName, '' + index + '.' + j);
+                });
+        }
+
+        /**
          * Writes the content of the page.
          */
         function writeToBlockContainer(klass, page, i) {
             var headerFooterIndex = model.getIndexForPage(klass, i),
                 blocks,
-                isHeaderFooter = isClassHeaderFooter(klass),
-                pageContent;
+                isRepetitive = isContentClassRepetitive(klass),
+                contentContainer;
 
-            function isClassHeaderFooter(klass) {
-                return klass === headerClass || klass === footerClass;
-            }
+            contentContainer = getContentContainer(page, klass);
 
-            function getPageContent(klass) {
-                switch (klass) {
-                    case headerClass:
-                        return page.header;
-                    case footerClass:
-                        return page.footer;
-                    case contentClass:
-                        return firstPage.content;
-                    default:
-                        break;
-                }
-            }
-
-            function getContentMarginKey(klass) {
-                switch (klass) {
-                    case headerClass:
-                        return 'margin-top';
-                    case footerClass:
-                        return 'margin-bottom';
-                    default:
-                        break;
-                }
-            }
-
-            function getContentMarginValue(klass) {
-                switch (klass) {
-                    case headerClass:
-                    case footerClass:
-                        return getPageContent(klass).$el.height;
-                    default:
-                        break;
-                }
-            }
-
-            function adjustMargin(klass) {
-                var key = getContentMarginKey(klass),
-                    value;
-
-                if (!key) {
-                    return;
-                }
-
-                value = getContentMarginValue(klass);
-
-                page.content.$margin.css(key, value);
-            }
-
-            function labelControlElements($block) {
-                $block
-                    .find(controlElsSelector)
-                    .each(function (j) {
-                        $(this).attr(idAttrName, '' + i + '.' + j);
-                    });
-            }
-
-            pageContent = getPageContent(klass);
-
-            if (!pageContent) {
-                // No page content to put the blocks to
+            if (!contentContainer) {
+                // No content container to put the content blocks to
                 return;
             }
 
-            if (isHeaderFooter) {
-                pageContent.clear();
+            if (isRepetitive) {
+                // Clear repetitive content because
+                // we can clone them again.
+                contentContainer.clear();
             }
 
             if (headerFooterIndex < 0) {
-                // No header/footer in this page
+                // No header/footer in this page.
                 return;
             }
 
             blocks = model.getBlocks(klass);
 
-            if (isHeaderFooter) {
+            if (isRepetitive) {
                 // get appropriate header/footer index for this page
                 blocks = blocks(headerFooterIndex);
             }
@@ -403,7 +470,8 @@
                         changedElementId;
 
                     labelControlElements($block);
-                    if (isHeaderFooter) {
+
+                    if (isRepetitive) {
                         $renderedBlock = $block.clone(true, true);
                     }
 
@@ -428,7 +496,7 @@
                             var $origEl,
                                 $this = $(this);
 
-                            if (klass !== headerClass && klass !== footerClass) {
+                            if (!isRepetitive) {
                                 return;
                             }
 
@@ -448,10 +516,10 @@
                                 .trigger(e.type, d);
                         });
 
-                    pageContent.append($renderedBlock);
+                    contentContainer.append($renderedBlock);
                 });
 
-            adjustMargin(klass);
+            allocateSpaceForContent(klass);
         }
 
         /**
@@ -595,6 +663,9 @@
                 });
         }
 
+        /**
+         * Adds the first page if it does not exist.
+         */
         function keepFirstPage() {
             if (paginator.pages.length > 0) {
                 return;
@@ -602,6 +673,9 @@
             view.addPage(firstPage);
         }
 
+        /**
+         * Writes the contents to the pages.
+         */
         function doWriting() {
             var hasPerformedPageBreaks;
             do {
@@ -610,6 +684,10 @@
             } while (hasPerformedPageBreaks);
         }
 
+        /**
+         * Simulates a lock so that the renderer will not run multiple times.
+         * @param {function} fn The function to run.
+         */
         function lock(fn) {
             paginator.detachObserver();
             isRendering = false;
@@ -632,7 +710,7 @@
                 // TODO implement hard page/section breaks
                 // section breaks are what reset the header indexing, etc.
                 // TODO move elements when extra space has been found on previous pages.
-                writeToBlockContainer(contentClass);
+                writeToBlockContainer(mainClass);
                 setOrder();
                 orderContent();
                 doWriting();
@@ -642,8 +720,8 @@
         };
 
         /**
-         *
-         * @param parent
+         * Mounts the renderer to the paginator.
+         * @param {Paginator} parent The paginator.
          */
         self.mountTo = function mountTo(parent) {
             paginator = parent;
@@ -662,7 +740,7 @@
             paginator;
 
         /**
-         *
+         * Creates the model element.
          */
         function createElement() {
             self.$el = self.$el || $('<div>').addClass(modelClass);
@@ -793,7 +871,7 @@
         /**
          *
          * @param klass
-         * @returns {*|{}}
+         * @returns {jQuery}
          */
         self.getOrderedBlocks = function getOrderedBlocks(klass) {
             return getBlockContainers(klass).find('[' + orderDataAttrName + ']');
@@ -857,7 +935,7 @@
         /**
          *
          * @param klass
-         * @returns {XMLList}
+         * @returns {jQuery}
          */
         self.getBlocks = function getBlocks(klass) {
             return self.$el
@@ -870,7 +948,7 @@
          *
          * @param page
          * @param i
-         * @returns {*}
+         * @returns {PaginatorPage}
          */
         self.addPage = function addPage(page, i) {
             addToPageList(page, i);
@@ -902,7 +980,7 @@
             pub,
             areEventsAttached = false,
             isObserving = false,
-            debounceHandle = null;
+            debouncedRender = debounce(render, debounceDuration);
 
         opts = new PaginatorOptions(opts);
 
@@ -937,29 +1015,12 @@
             self.renderer.render();
         }
 
+        /**
+         *
+         * @param mutations
+         */
         function commitMutations(mutations) {
-            var isHeaderFooterElement;
-
-            //isHeaderFooterElement = mutations.reduce(function (isElement, mutation) {
-            //    var $parents = $(mutation.target).parents();
-            //
-            //    return isElement && (
-            //            $parents.is(toClassSelector(headerClass)) ||
-            //            $parents.is(toClassSelector(footerClass))
-            //        );
-            //}, true);
-
-            //if (isHeaderFooterElement) {
-            //    return;
-            //}
-
-            if (!!debounceHandle) {
-                clearTimeout(debounceHandle);
-            }
-
-            debounceHandle = setTimeout(function () {
-                render();
-            }, 250);
+            debouncedRender();
         }
 
         /**
@@ -993,7 +1054,7 @@
                 //.findShallow(
                     [
                         toClassSelector(headerClass),
-                        toClassSelector(contentClass),
+                        toClassSelector(mainClass),
                         toClassSelector(footerClass)
                     ]
                         .join(',')
