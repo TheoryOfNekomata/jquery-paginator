@@ -15,7 +15,9 @@
         parentDataAttrName = 'parent',
         terminalClass = '-terminal',
         blockParentClass = 'block-parent',
-        orderDataAttrName = 'data-order';
+        orderDataAttrName = 'data-order',
+        idAttrName = 'data-element-id',
+        controlElsSelector = 'input, select, textarea, button, a, meter';
 
     // http://stackoverflow.com/questions/7051897/how-can-i-select-the-shallowest-matching-descendant
     jQuery.fn.findShallow = function(sel) {
@@ -77,6 +79,10 @@
         };
 
     })();
+
+    function toAttrSelector(key, value) {
+        return '[' + key + '="' + value + '"]';
+    }
 
     /**
      * Converts a class string to a CSS selector.
@@ -328,17 +334,16 @@
                     break;
             }
 
-            function addBlockEventListener($block) {
-                // TODO bind event listener once
-                $block
-                    .on('change', 'input, textarea, select', function (e) {
-                    });
-            }
-
             blocks
-                .each(function () {
+                .each(function (i) {
                     var $block = $(this),
                         $renderedBlock = $block;
+
+                    $block
+                        .find(controlElsSelector)
+                        .each(function (j) {
+                            $(this).attr(idAttrName, '' + i + '.' + j);
+                        });
 
                     if (isClone) {
                         $renderedBlock = $block.clone(true, true);
@@ -355,17 +360,31 @@
                         .attr(orderDataAttrName, 0);
 
                     $renderedBlock
+                        .attr(idAttrName, i)
                         .data(parentDataAttrName, $blockParent)
                         .removeClass(pageBlockClass)
-                        .addClass(pageAddedClass);
+                        .addClass(pageAddedClass)
+                        .on('change', controlElsSelector, function (e, d) {
+                            var thisElementId,
+                                $origEl;
+
+                            if (klass !== headerClass && klass !== footerClass) {
+                                return;
+                            }
+
+                            thisElementId = $(this).attr(idAttrName);
+
+                            $origEl = $blockParent.find(toAttrSelector(idAttrName, thisElementId));
+                            $origEl
+                                .val($(this).val())
+                                .trigger(e.type, d);
+                        });
 
                     switch (klass) {
                         case headerClass:
-                            addBlockEventListener($renderedBlock);
                             page.header.append($renderedBlock);
                             return;
                         case footerClass:
-                            addBlockEventListener($renderedBlock);
                             page.footer.append($renderedBlock);
                             return;
                         default:
@@ -487,6 +506,9 @@
             return true;
         }
 
+        /**
+         *
+         */
         function removeBlankPages() {
             var pagesToDelete = [];
 
@@ -508,6 +530,9 @@
                 });
         }
 
+        /**
+         *
+         */
         function orderContent() {
             view
                 .$el
@@ -522,37 +547,49 @@
                 });
         }
 
+        function keepFirstPage() {
+            if (paginator.pages.length > 0) {
+                return;
+            }
+            view.addPage(firstPage);
+        }
+
+        function doWriting() {
+            var hasPerformedPageBreaks;
+            do {
+                hasPerformedPageBreaks = performPageBreaks();
+                writePageComponents();
+            } while (hasPerformedPageBreaks);
+        }
+
+        function lock(fn) {
+            paginator.detachObserver();
+            isRendering = false;
+
+            fn();
+
+            setTimeout(function () {
+                paginator.attachObserver();
+                isRendering = true;
+            });
+        }
+
         /**
          * Renders the content.
          */
         self.render = function render() {
-            paginator.detachObserver();
-            if (paginator.pages.length < 1) {
-                view.addPage(firstPage);
-            }
-
-            var hasPerformedPageBreaks;
-
-            checkDeletedBlocks();
-            // TODO implement hard page/section breaks
-            // section breaks are what reset the header indexing, etc.
-            // TODO move elements when extra space has been found on previous pages.
-            writeToBlockContainer(contentClass);
-            setOrder();
-            orderContent();
-            do {
-                hasPerformedPageBreaks = performPageBreaks();
-                writePageComponents();
-            } while (hasPerformedPageBreaks);
-            removeBlankPages();
-            do {
-                hasPerformedPageBreaks = performPageBreaks();
-                writePageComponents();
-            } while (hasPerformedPageBreaks);
-
-            setTimeout(function () {
-                paginator.attachObserver();
-                isRendering = false;
+            lock(function () {
+                keepFirstPage();
+                checkDeletedBlocks();
+                // TODO implement hard page/section breaks
+                // section breaks are what reset the header indexing, etc.
+                // TODO move elements when extra space has been found on previous pages.
+                writeToBlockContainer(contentClass);
+                setOrder();
+                orderContent();
+                doWriting();
+                removeBlankPages();
+                doWriting();
             });
         };
 
@@ -611,7 +648,7 @@
          *
          * @param klass
          * @param pageNumber
-         * @returns {number|*}
+         * @returns {number}
          */
         function getIndexForTerminalBlockContainer(klass, pageNumber) {
             var i,
@@ -855,8 +892,6 @@
         function commitMutations(mutations) {
             var isHeaderFooterElement;
 
-            console.log(mutations);
-
             //isHeaderFooterElement = mutations.reduce(function (isElement, mutation) {
             //    var $parents = $(mutation.target).parents();
             //
@@ -957,21 +992,13 @@
          *
          */
         self.attachEventListeners = function attachEventListeners() {
-            console.log(self.model.$watch);
             self.model.$watch
-                .on('change', 'input, select, textarea', function (e, d) {
-                    var mutation;
-
-                    console.log('asdfasdfasdfasdfasdf');
-
+                .on('change', 'input, select, textarea', function (e) {
                     if (!isObserving) {
                         return;
                     }
 
-                    mutation = e;
-                    mutation.data = d;
-
-                    commitMutations([mutation]);
+                    commitMutations(e);
                 });
         };
 
