@@ -131,7 +131,7 @@
         };
 
         /**
-         *
+         * Clears the page content.
          */
         self.clear = function clear() {
             self.$margin.html('');
@@ -199,6 +199,10 @@
             return self.$el.height() - topHeight - bottomHeight;
         }
 
+        /**
+         * Gets the current page index.
+         * @returns {number} The current page index.
+         */
         function getPageIndex() {
             var pageIndex = -1;
 
@@ -226,12 +230,16 @@
 
         /**
          * Determines if the page has elements that can trigger page breaks.
-         * @returns {boolean}
+         * @returns {boolean} Does the page require breaks?
          */
         self.hasBreaks = function hasBreaks() {
             return self.getOverflowBlocks().length > 0;
         };
 
+        /**
+         * Determines if the page is blank (no blocks currently written).
+         * @returns {boolean} Is the page blank?
+         */
         self.isBlank = function isBlank() {
             return self.content.$margin.children().length < 1;
         };
@@ -251,6 +259,9 @@
                 });
         };
 
+        /**
+         * Unmounts the page.
+         */
         self.unmount = function unmount() {
             self.$el.remove();
         };
@@ -298,40 +309,91 @@
          * Writes the content of the page.
          */
         function writeToBlockContainer(klass, page, i) {
-            var blockContainerIndex = model.getIndexForPage(klass, i),
+            var headerFooterIndex = model.getIndexForPage(klass, i),
                 blocks,
-                isClone = false;
+                isHeaderFooter = isClassHeaderFooter(klass),
+                pageContent;
 
-            // TODO refactor this part of the code.
+            function isClassHeaderFooter(klass) {
+                return klass === headerClass || klass === footerClass;
+            }
 
-            if (blockContainerIndex < 0) {
+            function getPageContent(klass) {
                 switch (klass) {
                     case headerClass:
-                        page.header.clear();
-                        return;
+                        return page.header;
                     case footerClass:
-                        page.footer.clear();
-                        return;
+                        return page.footer;
+                    case contentClass:
+                        return firstPage.content;
                     default:
                         break;
                 }
+            }
+
+            function getContentMarginKey(klass) {
+                switch (klass) {
+                    case headerClass:
+                        return 'margin-top';
+                    case footerClass:
+                        return 'margin-bottom';
+                    default:
+                        break;
+                }
+            }
+
+            function getContentMarginValue(klass) {
+                switch (klass) {
+                    case headerClass:
+                    case footerClass:
+                        return getPageContent(klass).$el.height;
+                    default:
+                        break;
+                }
+            }
+
+            function adjustMargin(klass) {
+                var key = getContentMarginKey(klass),
+                    value;
+
+                if (!key) {
+                    return;
+                }
+
+                value = getContentMarginValue(klass);
+
+                page.content.$margin.css(key, value);
+            }
+
+            function labelControlElements($block) {
+                $block
+                    .find(controlElsSelector)
+                    .each(function (j) {
+                        $(this).attr(idAttrName, '' + i + '.' + j);
+                    });
+            }
+
+            pageContent = getPageContent(klass);
+
+            if (!pageContent) {
+                // No page content to put the blocks to
                 return;
             }
 
-            switch (klass) {
-                case footerClass:
-                    page.footer.clear();
-                    blocks = model.getBlocks(klass)(blockContainerIndex);
-                    isClone = true;
-                    break;
-                case headerClass:
-                    page.header.clear();
-                    blocks = model.getBlocks(klass)(blockContainerIndex);
-                    isClone = true;
-                    break;
-                default:
-                    blocks = model.getBlocks(klass);
-                    break;
+            if (isHeaderFooter) {
+                pageContent.clear();
+            }
+
+            if (headerFooterIndex < 0) {
+                // No header/footer in this page
+                return;
+            }
+
+            blocks = model.getBlocks(klass);
+
+            if (isHeaderFooter) {
+                // get appropriate header/footer index for this page
+                blocks = blocks(headerFooterIndex);
             }
 
             blocks
@@ -340,17 +402,13 @@
                         $renderedBlock = $block,
                         changedElementId;
 
-                    $block
-                        .find(controlElsSelector)
-                        .each(function (j) {
-                            $(this).attr(idAttrName, '' + i + '.' + j);
-                        });
-
-                    if (isClone) {
+                    labelControlElements($block);
+                    if (isHeaderFooter) {
                         $renderedBlock = $block.clone(true, true);
                     }
 
                     if (!$block.parents().is('body') || $block.parents(toClassSelector(pageDeletedClass)).length > 0) {
+                        // block is detached and not visible, or is deleted.
                         $renderedBlock.off('change', controlElsSelector);
                         return;
                     }
@@ -390,30 +448,10 @@
                                 .trigger(e.type, d);
                         });
 
-                    switch (klass) {
-                        case headerClass:
-                            page.header.append($renderedBlock);
-                            return;
-                        case footerClass:
-                            page.footer.append($renderedBlock);
-                            return;
-                        default:
-                            break;
-                    }
-
-                    firstPage.content.append($renderedBlock);
+                    pageContent.append($renderedBlock);
                 });
 
-            switch (klass) {
-                case headerClass:
-                    page.content.$margin.css('margin-top', page.$el.find(toClassSelector(klass)).height());
-                    break;
-                case footerClass:
-                    page.content.$margin.css('margin-bottom', page.$el.find(toClassSelector(klass)).height());
-                    break;
-                default:
-                    break;
-            }
+            adjustMargin(klass);
         }
 
         /**
