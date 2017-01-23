@@ -18,6 +18,7 @@
         orderDataAttrName = 'data-order',
         idAttrName = 'data-element-id',
         controlElsSelector = 'input, select, textarea, button, a, meter',
+        focusableElsSelector = '[tabindex="0"]',
         debounceDuration = 250;
 
     // http://stackoverflow.com/questions/7051897/how-can-i-select-the-shallowest-matching-descendant
@@ -321,7 +322,9 @@
             view,
             paginator,
             firstPage = new PaginatorPage(opts),
-            isRendering = false;
+            isRendering = false,
+            changedElementId,
+            $changedEl = [];
 
         /**
          * Writes the appropriate headers and the footers of the page.
@@ -346,21 +349,14 @@
          * Gets a page's content container of a content class.
          * @param {PaginatorPage} page The page.
          * @param {string} klass The content class.
-         * @returns {PaginatorContainer|null} The content container.
+         * @returns {PaginatorContainer} The content container.
          */
         function getContentContainer(page, klass) {
-            switch (klass) {
-                case headerClass:
-                    return page.header;
-                case footerClass:
-                    return page.footer;
-                case mainClass:
-                    return firstPage.content;
-                default:
-                    break;
+            if (klass === mainClass) {
+                return firstPage.content;
             }
 
-            return null;
+            return page[klass];
         }
 
         /**
@@ -388,12 +384,8 @@
          * @returns {number} The margin value, in pixels.
          */
         function getAllocationValue(page, klass) {
-            switch (klass) {
-                case headerClass:
-                case footerClass:
-                    return getContentContainer(page, klass).$el.height();
-                default:
-                    break;
+            if (klass === headerClass || klass === footerClass) {
+                return getContentContainer(page, klass).$el.height();
             }
             return 0;
         }
@@ -411,7 +403,7 @@
                 return;
             }
 
-            value = getAllocationValue(klass);
+            value = getAllocationValue(page, klass);
             page.content.$margin.css(key, value);
         }
 
@@ -466,10 +458,9 @@
             blocks
                 .each(function (i) {
                     var $block = $(this),
-                        $renderedBlock = $block,
-                        changedElementId;
+                        $renderedBlock = $block;
 
-                    labelControlElements($block);
+                    labelControlElements($block, i);
 
                     if (isRepetitive) {
                         $renderedBlock = $block.clone(true, true);
@@ -492,6 +483,18 @@
                         .data(parentDataAttrName, $blockParent)
                         .removeClass(pageBlockClass)
                         .addClass(pageAddedClass)
+                        .on('click', focusableElsSelector, function () {
+                            var $this = $(this);
+
+                            console.log($this);
+                        })
+                        .on('keypress', focusableElsSelector, function (e) {
+                            var $this = $(this);
+
+                            if (e.which === 13) {
+                                console.log($this, 'keypress');
+                            }
+                        })
                         .on('change', controlElsSelector, function (e, d) {
                             var $origEl,
                                 $this = $(this);
@@ -519,7 +522,17 @@
                     contentContainer.append($renderedBlock);
                 });
 
-            allocateSpaceForContent(klass);
+            $changedEl = contentContainer.$el.find(toAttrSelector(idAttrName, changedElementId));
+            if ($changedEl.length > 0) {
+                console.log($changedEl);
+                $changedEl[0].focus();
+                debounce(function () {
+                    $changedEl = [];
+                    console.log($changedEl);
+                }, 50)();
+            }
+
+            allocateSpaceForContent(page, klass);
         }
 
         /**
@@ -1102,7 +1115,7 @@
          */
         self.attachEventListeners = function attachEventListeners() {
             self.model.$watch
-                .on('change', 'input, select, textarea', function (e) {
+                .on('change', controlElsSelector, function (e) {
                     if (!isObserving) {
                         return;
                     }
