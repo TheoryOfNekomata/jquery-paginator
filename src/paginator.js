@@ -323,8 +323,8 @@
             paginator,
             firstPage = new PaginatorPage(opts),
             isRendering = false,
-            changedElementId,
-            $changedEl = [];
+            lastFocusedElementId,
+            $lastFocusedEl = [];
 
         /**
          * Writes the appropriate headers and the footers of the page.
@@ -415,7 +415,7 @@
          */
         function labelControlElements($block, index) {
             $block
-                .find(controlElsSelector)
+                .find(controlElsSelector + ', ' + focusableElsSelector)
                 .each(function (j) {
                     $(this).attr(idAttrName, '' + index + '.' + j);
                 });
@@ -454,6 +454,8 @@
                 // get appropriate header/footer index for this page
                 blocks = blocks(headerFooterIndex);
             }
+
+            lastFocusedElementId = $(document.activeElement).attr(idAttrName) || lastFocusedElementId;
 
             blocks
                 .each(function (i) {
@@ -503,8 +505,8 @@
                                 return;
                             }
 
-                            changedElementId = $this.attr(idAttrName);
-                            $origEl = $blockParent.find(toAttrSelector(idAttrName, changedElementId));
+                            lastFocusedElementId = $this.attr(idAttrName);
+                            $origEl = $blockParent.find(toAttrSelector(idAttrName, lastFocusedElementId));
 
                             if ($this.is('select')) {
                                 $origEl
@@ -522,17 +524,13 @@
                     contentContainer.append($renderedBlock);
                 });
 
-            $changedEl = contentContainer.$el.find(toAttrSelector(idAttrName, changedElementId));
-            if ($changedEl.length > 0) {
-                console.log($changedEl);
-                $changedEl[0].focus();
-                debounce(function () {
-                    $changedEl = [];
-                    console.log($changedEl);
-                }, 50)();
-            }
-
             allocateSpaceForContent(page, klass);
+
+            $lastFocusedEl = contentContainer.$el.find(toAttrSelector(idAttrName, lastFocusedElementId));
+
+            if ($lastFocusedEl.length > 0) {
+                $lastFocusedEl[0].focus();
+            }
         }
 
         /**
