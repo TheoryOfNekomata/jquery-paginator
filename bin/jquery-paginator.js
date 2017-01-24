@@ -691,7 +691,9 @@
             var hasPerformedPageBreaks;
             do {
                 hasPerformedPageBreaks = performPageBreaks();
-                writePageComponents();
+                setTimeout(function () {
+                    writePageComponents();
+                });
             } while (hasPerformedPageBreaks);
         }
 

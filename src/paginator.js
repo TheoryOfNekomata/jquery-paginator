@@ -408,6 +408,17 @@
         }
 
         /**
+         * Reset default margins for the page.
+         * @param {PaginatorPage} page
+         * @param {string} klass
+         */
+        function resetToDefaultMargins(page, klass) {
+            var key = getAllocationKey(klass);
+
+            page.content.$margin.css(key, null);
+        }
+
+        /**
          * Labels the control elements of the block, to be used for synchronizing
          * the data and attributes of the controls.
          * @param {Element} $block The block.
@@ -524,7 +535,7 @@
                     contentContainer.append($renderedBlock);
                 });
 
-            allocateSpaceForContent(page, klass);
+            contentContainer.getBlocks().length > 0 ? allocateSpaceForContent(page, klass) : resetToDefaultMargins(page, klass);
 
             $lastFocusedEl = contentContainer.$el.find(toAttrSelector(idAttrName, lastFocusedElementId));
 
@@ -691,7 +702,9 @@
             var hasPerformedPageBreaks;
             do {
                 hasPerformedPageBreaks = performPageBreaks();
-                writePageComponents();
+                setTimeout(function () {
+                    writePageComponents();
+                });
             } while (hasPerformedPageBreaks);
         }
 
