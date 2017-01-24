@@ -727,6 +727,7 @@
          */
         self.render = function render() {
             lock(function () {
+                paginator.$el.trigger('paginator.renderstart');
                 keepFirstPage();
                 checkDeletedBlocks();
                 // TODO implement hard page/section breaks
@@ -738,6 +739,7 @@
                 doWriting();
                 removeBlankPages();
                 doWriting();
+                paginator.$el.trigger('paginator.renderend');
             });
         };
 
