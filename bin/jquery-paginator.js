@@ -1164,7 +1164,7 @@
                         return;
                     }
 
-                    commitMutations(e);
+                    commitMutations([e]);
                 });
         };
 
