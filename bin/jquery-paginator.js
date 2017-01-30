@@ -727,15 +727,17 @@
          * @param {function} fn The function to run.
          */
         function lock(fn) {
+            if (isRendering) {
+                return;
+            }
+
             paginator.detachObserver();
-            isRendering = false;
+            isRendering = true;
 
             fn();
 
-            setTimeout(function () {
-                paginator.attachObserver();
-                isRendering = true;
-            });
+            paginator.attachObserver();
+            isRendering = false;
         }
 
         /**
@@ -1068,6 +1070,13 @@
          * @param mutations
          */
         function commitMutations(mutations) {
+            var firstMutation = mutations[0];
+
+            if (firstMutation.target === self.model.$watch[0] &&
+                firstMutation.type === 'attributes' &&
+                firstMutation.attributeName === 'id') {
+                return;
+            }
             debouncedRender();
         }
 
