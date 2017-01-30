@@ -726,8 +726,7 @@
          * Renders the content.
          */
         self.render = function render() {
-            lock(function () {
-                paginator.$el.trigger('paginator.renderstart');
+            function doRender() {
                 keepFirstPage();
                 checkDeletedBlocks();
                 // TODO implement hard page/section breaks
@@ -739,7 +738,15 @@
                 doWriting();
                 removeBlankPages();
                 doWriting();
-                paginator.$el.trigger('paginator.renderend');
+            }
+
+            lock(function () {
+                paginator.$el.trigger('paginator.renderstart');
+                doRender();
+                paginator.$el.imagesLoaded().always(function () {
+                    doRender();
+                    paginator.$el.trigger('paginator.renderend');
+                });
             });
         };
 
