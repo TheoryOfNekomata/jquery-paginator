@@ -419,6 +419,16 @@
         }
 
         /**
+         *
+         */
+        function resetMarginsOfAllPages() {
+            paginator.pages.forEach(function (page) {
+                resetToDefaultMargins(page, headerClass);
+                resetToDefaultMargins(page, footerClass);
+            });
+        }
+
+        /**
          * Labels the control elements of the block, to be used for synchronizing
          * the data and attributes of the controls.
          * @param {Element} $block The block.
@@ -732,6 +742,7 @@
                 // TODO implement hard page/section breaks
                 // section breaks are what reset the header indexing, etc.
                 // TODO move elements when extra space has been found on previous pages.
+                resetMarginsOfAllPages();
                 writeToBlockContainer(mainClass);
                 setOrder();
                 orderContent();
