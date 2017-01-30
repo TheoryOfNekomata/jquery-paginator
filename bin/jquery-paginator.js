@@ -414,7 +414,7 @@
          */
         function resetToDefaultMargins(page, klass) {
             var key;
-            
+
             if (!page) {
                 return;
             }
