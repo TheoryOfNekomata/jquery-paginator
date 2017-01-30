@@ -413,7 +413,13 @@
          * @param {string} klass
          */
         function resetToDefaultMargins(page, klass) {
-            var key = getAllocationKey(klass);
+            var key;
+            
+            if (!page) {
+                return;
+            }
+
+            key = getAllocationKey(klass);
 
             page.content.$margin.css(key, null);
         }
