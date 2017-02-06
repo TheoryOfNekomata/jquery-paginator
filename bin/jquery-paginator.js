@@ -128,7 +128,9 @@
      * @constructor
      */
     function PaginatorOptions(rawOpts) {
-        return rawOpts;
+        return {
+            watch: !!rawOpts.watch
+        };
     }
 
     /**
@@ -1138,6 +1140,7 @@
          *
          */
         self.detachObserver = function detachObserver() {
+            console.log('disconnected'); // don't remove this, dunno why
             modelObserver.disconnect();
         };
 
@@ -1175,7 +1178,9 @@
             if (!!isObserving) {
                 return;
             }
-            self.attachObserver();
+            if (opts.watch) {
+                self.attachObserver();
+            }
             isObserving = true;
         }
 
