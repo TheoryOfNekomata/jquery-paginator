@@ -747,6 +747,7 @@
          */
         self.render = function render() {
             function doRender() {
+                console.log('start', document.activeElement);
                 keepFirstPage();
                 checkDeletedBlocks();
                 // TODO implement hard page/section breaks
@@ -757,8 +758,10 @@
                 setOrder();
                 orderContent();
                 doWriting();
+                console.log('First write', document.activeElement);
                 removeBlankPages();
                 doWriting();
+                console.log('Second write', document.activeElement);
             }
 
             lock(function () {
@@ -1141,7 +1144,9 @@
          */
         self.detachObserver = function detachObserver() {
             console.log('disconnected'); // don't remove this, dunno why
-            modelObserver.disconnect();
+            //setTimeout(function () {
+                modelObserver.disconnect();
+            //}, 10);
         };
 
         /**

@@ -1,6 +1,6 @@
 {
   "name": "@theoryofnekomata/jquery-paginator",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Splits elements into pages.",
   "main": "bin/jquery-paginator.js",
   "scripts": {

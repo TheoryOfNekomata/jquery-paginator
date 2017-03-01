@@ -1140,8 +1140,10 @@
          *
          */
         self.detachObserver = function detachObserver() {
-            console.log('disconnected'); // don't remove this, dunno why
-            modelObserver.disconnect();
+            //console.log('disconnected'); // don't remove this, dunno why
+            setTimeout(function () {
+                modelObserver.disconnect();
+            }, 10);
         };
 
         /**
